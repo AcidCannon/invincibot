@@ -63,3 +63,9 @@ doxygen.log
 node_modules
 package.json
 package-lock.json
+
+docs/
+examples/
+CHANGELOG.md
+.travis.yml
+Doxyfile
