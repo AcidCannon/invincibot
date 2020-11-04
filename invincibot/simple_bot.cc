@@ -5,7 +5,7 @@
 using namespace sc2;
 
 class Bot : public Agent {
-public:
+   public:
     virtual void OnGameStart() final {
         std::cout << "Hello, World!" << std::endl;
     }
@@ -38,13 +38,15 @@ public:
                 break;
             }
             case UNIT_TYPEID::TERRAN_MARINE: {
-                if(if_rush){
+                if (if_rush) {
                     const GameInfo& game_info = Observation()->GetGameInfo();
-                    Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations.front());
+                    Actions()->UnitCommand(
+                        unit, ABILITY_ID::ATTACK_ATTACK,
+                        game_info.enemy_start_locations[0]);
                 } else {
-                    Actions()->UnitCommand(unit, ABILITY_ID::SMART, GatheringPoint);
+                    Actions()->UnitCommand(unit, ABILITY_ID::SMART,
+                                           GatheringPoint);
                 }
-
                 break;
             }
             default: {
@@ -52,15 +54,16 @@ public:
             }
         }
     }
-private:
+
+   private:
     bool if_rush = false;
     Point2D GatheringPoint;
 
     size_t CountUnitType(UNIT_TYPEID unit_type) {
         size_t count = 0;
         Units units = Observation()->GetUnits(Unit::Alliance::Self);
-        for(auto &unit : units){
-            if(unit->unit_type == unit_type){
+        for (auto& unit : units) {
+            if (unit->unit_type == unit_type) {
                 count++;
             }
         }
@@ -73,11 +76,12 @@ private:
         }
     }
 
-    bool TryBuildStructure(ABILITY_ID ability_type_for_structure, UNIT_TYPEID unit_type = UNIT_TYPEID::TERRAN_SCV) {
+    bool TryBuildStructure(ABILITY_ID ability_type_for_structure,
+                           UNIT_TYPEID unit_type = UNIT_TYPEID::TERRAN_SCV) {
         const ObservationInterface* observation = Observation();
 
-        // If a unit already is building a supply structure of this type, do nothing.
-        // Also get an scv to build the structure.
+        // If a unit already is building a supply structure of this type, do
+        // nothing. Also get an scv to build the structure.
         const Unit* unit_to_build = nullptr;
         Units units = observation->GetUnits(Unit::Alliance::Self);
         for (const auto& unit : units) {
@@ -95,9 +99,9 @@ private:
         float rx = GetRandomScalar();
         float ry = GetRandomScalar();
 
-        Actions()->UnitCommand(unit_to_build,
-            ability_type_for_structure,
-            Point2D(unit_to_build->pos.x + rx * 15.0f, unit_to_build->pos.y + ry * 15.0f));
+        Actions()->UnitCommand(unit_to_build, ability_type_for_structure,
+                               Point2D(unit_to_build->pos.x + rx * 15.0f,
+                                       unit_to_build->pos.y + ry * 15.0f));
 
         return true;
     }
@@ -149,13 +153,11 @@ int main(int argc, char* argv[]) {
     coordinator.LoadSettings(argc, argv);
 
     Bot bot;
-    coordinator.SetParticipants({
-        CreateParticipant(Race::Terran, &bot),
-        CreateComputer(Race::Zerg)
-    });
+    coordinator.SetParticipants(
+        {CreateParticipant(Race::Terran, &bot), CreateComputer(Race::Zerg)});
 
     coordinator.LaunchStarcraft();
-    coordinator.StartGame(sc2::kMapBelShirVestigeLE);
+    coordinator.StartGame(sc2::BelShirVestigeLE);
 
     while (coordinator.Update()) {
     }
