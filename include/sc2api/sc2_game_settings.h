@@ -127,5 +127,8 @@ extern const char* kMapEmpty;
 extern const char* kMapEmptyLong;
 extern const char* kMapEmptyTall;
 extern const char* kMapMarineMicro;
+extern const char* CactusValleyLE;
+extern const char* BelShirVestigeLE;
+extern const char* ProximaStationLE;
 
 }

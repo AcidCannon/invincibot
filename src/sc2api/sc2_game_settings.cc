@@ -43,4 +43,10 @@ const char* kMapEmptyLong        = "Test/EmptyLong.SC2Map";
 const char* kMapEmptyTall        = "Test/EmptyTall.SC2Map";
 const char* kMapMarineMicro      = "Example/MarineMicro.SC2Map";
 
+
+/** Required maps for the CMPUT 350 tournament **/
+const char* CactusValleyLE        = "Ladder/CactusValleyLE.SC2Map";
+const char* BelShirVestigeLE      = "Ladder/BelShirVestigeLE.SC2Map";
+const char* ProximaStationLE      = "Ladder/ProximaStationLE.SC2Map";
+
 }
