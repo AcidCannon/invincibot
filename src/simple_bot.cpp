@@ -158,7 +158,7 @@ int main(int argc, char* argv[]) {
         {CreateParticipant(Race::Terran, &bot), CreateComputer(Race::Zerg)});
 
     coordinator.LaunchStarcraft();
-    coordinator.StartGame(sc2::BelShirVestigeLE);
+    coordinator.StartGame("BelShirVestigeLE.SC2Map");
 
     while (coordinator.Update()) {
     }
