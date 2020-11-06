@@ -2,7 +2,8 @@
 
 ## Build requirements
 1. Download (the password is **iagreetotheeula**) the following map packs:
-    * [Ladder 2017 Season 1](http://blzdistsc2-a.akamaihd.net/MapPacks/Ladder2017Season1.zip) If it says "zip can't be downloaded ...", right click the link and choose open linke in a new tab.
+    * [Ladder 2017 Season 1](http://blzdistsc2-a.akamaihd.net/MapPacks/Ladder2017Season1.zip)
+    * If it says `zip can't be downloaded securely`, right click the link and choose open link in a new tab.
 
 2. Put the downloaded maps into the Maps folder **(create it if the folder doesn't exist):**
     * Windows: C:\Program Files\StarCraft II\Maps
