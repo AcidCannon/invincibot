@@ -1,12 +1,12 @@
 # Invincibot
 
 ## Build requirements
-1. Download (the password is iagreetotheeula) the following map packs:
-    * [Ladder 2019 Season 1](http://blzdistsc2-a.akamaihd.net/MapPacks/Ladder2019Season1.zip)
+1. Download (the password is **iagreetotheeula**) the following map packs:
+    * [Ladder 2017 Season 1](http://blzdistsc2-a.akamaihd.net/MapPacks/Ladder2017Season1.zip)
 
-2. Put the downloaded maps into the Maps folder (create it if the folder doesn't exist):
+2. Put the downloaded maps into the Maps folder **(create it if the folder doesn't exist):**
     * Windows: C:\Program Files\StarCraft II\Maps
-    * OS X: /Applications/StarCraft II/Maps. **If there is not `maps` folder in StarCraft II, create one.**
+    * OS X: /Applications/StarCraft II/Maps.
     * Linux: anywhere.
 
 3. Download and install [CMake](https://cmake.org/download/).
@@ -43,7 +43,7 @@ $ cmake ../
 $ VERBOSE=1 cmake --build . --parallel
 
 # Launch the bot with the specified path to a SC2 map, e.g.
-$ ./bin/Suvorov "Ladder2019Season3/AcropolisLE.SC2Map"
+$ ./bin/invincibot
 ```
 
 ## Coding Standard
