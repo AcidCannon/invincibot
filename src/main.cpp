@@ -1,13 +1,44 @@
-// // The MIT License (MIT)
-// //
-// // Copyright (c) 2017-2020 Alexander Kurbatov
+// The MIT License (MIT)
+//
+// Copyright (c) 2017-2020 Alexander Kurbatov
 
-// #include <sc2api/sc2_coordinator.h>
-// #include <sc2api/sc2_gametypes.h>
-// #include <sc2utils/sc2_arg_parser.h>
-// #include <sc2utils/sc2_manage_process.h>
+#include "simple_bot.h"
+#include <sc2api/sc2_coordinator.h>
+#include <sc2api/sc2_gametypes.h>
+#include <iostream>
+#include <string>
 
-// #include <iostream>
+using namespace std;
+int main(int argc, char* argv[]) {
+
+    if (argc != 2) {
+        std::cerr << "Usage: ./invincibot [num]" << std::endl;
+        std::cerr << "Index for maps: " << std::endl;
+        std::cerr << "0 - BelShirVestigeLE" << std::endl;
+        std::cerr << "1 - CactusValleyLE" << std::endl;
+        std::cerr << "2 - ProximaStationLE" << std::endl;
+        return -1;
+    }
+
+    string maps[3] = {"BelShirVestigeLE.SC2Map", "CactusValleyLE.SC2Map", "ProximaStationLE.SC2Map"};
+
+    Coordinator coordinator;
+    coordinator.LoadSettings(argc, argv);
+
+    Bot bot;
+    coordinator.SetParticipants(
+        {CreateParticipant(Race::Terran, &bot), CreateComputer(Race::Zerg)});
+
+    coordinator.LaunchStarcraft();
+    coordinator.StartGame(maps[atoi(argv[1])]);
+
+    while (coordinator.Update()) {
+    }
+
+    return 0;
+}
+
+
 
 // // #ifdef DEBUG
 // // int main(int argc, char* argv[]) {
@@ -143,3 +174,5 @@
 // }
 
 // #endif
+
+
