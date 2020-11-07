@@ -48,15 +48,50 @@ $ VERBOSE=1 cmake --build . --parallel
 $ ./bin/invincibot
 ```
 
+## Playing against the built-in AI
+
+For example,
+
+```
+./bin/invincibot -c -a zerg -d Medium -m 0
+```
+
+Result
+```
+ComputerDifficulty  : Medium
+ComputerOpponent    : True
+ComputerRace        : zerg
+GamePort            : 0
+LadderServer        :
+Map                 : BelShirVestigeLE.SC2Map
+OpponentId          :
+StartPort           : 0
+```
+
+Map Index:
+
+0 - BelShirVestigeLE.SC2Map
+
+1 - CactusValleyLE.SC2Map
+ 
+2 - ProximaStationLE.SC2Map
+## Playing against another agent
+For example,
+```
+TODO
+```
+
 ## Coding Standard
 We follow slightly modified [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html).
 
 ~~See [.travis/lint.sh](.travis/lint.sh) for details.~~
 
-## Knwon Issues
+
+## Known Issues
 1. system_error: random_device failed to open /dev/urandom: Too many open files
     -  Solution: run `ulimit -SHn 10000` in the terminal
     - Note: This setting could restore once restarting the machine
+
 
 ## License
 MIT License
