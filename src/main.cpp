@@ -2,48 +2,227 @@
 //
 // Copyright (c) 2017-2020 Alexander Kurbatov
 
-#include "simple_bot.h"
 #include <sc2api/sc2_coordinator.h>
 #include <sc2api/sc2_gametypes.h>
+#include <sc2utils/sc2_arg_parser.h>
+#include <sc2utils/sc2_manage_process.h>
+
 #include <iostream>
 #include <string>
+#include <map>
 
-using namespace std;
-int main(int argc, char* argv[]) {
+#include "simple_bot.h"
 
-    if (argc != 2) {
-        std::cerr << "Usage: ./invincibot [num]" << std::endl;
-        std::cerr << "Index for maps: " << std::endl;
-        std::cerr << "0 - BelShirVestigeLE" << std::endl;
-        std::cerr << "1 - CactusValleyLE" << std::endl;
-        std::cerr << "2 - ProximaStationLE" << std::endl;
-        return -1;
+struct Options {
+  Options() : GamePort(0), StartPort(0), ComputerOpponent(false) {}
+
+  std::string maps;
+  int32_t GamePort;
+  int32_t StartPort;
+  std::string ServerAddress;
+  std::string OpponentId;
+  bool ComputerOpponent;
+  sc2::Difficulty ComputerDifficulty;
+  sc2::Race ComputerRace;
+};
+
+
+/** Convert Functions **/
+static sc2::Race StringToRace(const std::string& name_, std::map<std::string, std::string> &output) {
+    std::string race(name_);
+    std::transform(race.begin(), race.end(), race.begin(), ::tolower);
+
+    output["ComputerRace"] = race;
+
+    if (race == "terran")
+        return sc2::Race::Terran;
+
+    if (race == "protoss")
+        return sc2::Race::Protoss;
+
+    if (race == "zerg")
+        return sc2::Race::Zerg;
+
+    if (race == "random")
+        return sc2::Race::Random;
+
+    output["ComputerRace"] = "random";
+    return sc2::Race::Random;
+}
+
+static sc2::Difficulty StringToDifficulty(const std::string& name_, std::map<std::string, std::string> &output) {
+    output["ComputerDifficulty"] = name_;
+    if (name_ == "VeryEasy")
+        return sc2::Difficulty::VeryEasy;
+
+    if (name_ == "Easy")
+        return sc2::Difficulty::Easy;
+
+    if (name_ == "Medium")
+        return sc2::Difficulty::Medium;
+
+    if (name_ == "MediumHard")
+        return sc2::Difficulty::MediumHard;
+
+    if (name_ == "Hard")
+        return sc2::Difficulty::Hard;
+
+    if (name_ == "HardVeryHard")
+        return sc2::Difficulty::HardVeryHard;
+
+    if (name_ == "VeryHard")
+        return sc2::Difficulty::VeryHard;
+
+    if (name_ == "CheatVision")
+        return sc2::Difficulty::CheatVision;
+
+    if (name_ == "CheatMoney")
+        return sc2::Difficulty::CheatMoney;
+
+    if (name_ == "CheatInsane")
+        return sc2::Difficulty::CheatInsane;
+    output["ComputerDifficulty"] = "Easy";
+    return sc2::Difficulty::Easy;
+}
+
+static std::string StringToMap(const std::string& IndexStr, std::map<std::string, std::string> &output) {
+    const std::string maps[3] = {"BelShirVestigeLE.SC2Map", "CactusValleyLE.SC2Map",
+                                 "ProximaStationLE.SC2Map"};
+    return output["Map"] = maps[atoi(IndexStr.c_str())];
+}
+
+
+static void initOutput(std::map<std::string, std::string> &output){
+    output["GamePort"] = "0";
+    output["StartPort"] = "0";
+    output["LadderServer"] = "";
+    output["ComputerOpponent"] = "False";
+    output["ComputerRace"] = "";
+    output["ComputerDifficulty"] = "";
+    output["OpponentId"] = "";
+    output["Map"] = "BelShirVestigeLE.SC2Map";
+}
+
+static void ParseArguments(int argc, char *argv[], Options *options_, std::map<std::string, std::string> &output) {
+    sc2::ArgParser arg_parser(argv[0]);
+    arg_parser.AddOptions(
+        {{"-g", "--GamePort", "Port of client to connect to", false},
+         {"-o", "--StartPort", "Starting server port", false},
+         {"-l", "--LadderServer", "Ladder server address", false},
+         {"-c", "--ComputerOpponent", "If we set up a computer opponent",false},
+         {"-a", "--ComputerRace", "Race of computer opponent", false},
+         {"-d", "--ComputerDifficulty", "Difficulty of computer opponent", false},
+         {"-x", "--OpponentId", "PlayerId of opponent", false},
+         { "-m", "--Map", "Map to play on against computer opponent", false}
+        });
+
+    arg_parser.Parse(argc, argv);
+
+    std::string MapIndex;
+    arg_parser.Get("Map", MapIndex);
+    options_->maps = atoi(MapIndex.c_str());
+
+    std::string GamePortStr;
+    if (arg_parser.Get("GamePort", GamePortStr)){
+        output["GamePort"] = GamePortStr;
+        options_->GamePort = atoi(GamePortStr.c_str());
     }
 
-    string maps[3] = {"BelShirVestigeLE.SC2Map", "CactusValleyLE.SC2Map", "ProximaStationLE.SC2Map"};
+    std::string StartPortStr;
+    if (arg_parser.Get("StartPort", StartPortStr)){
+        output["GamePort"] = StartPortStr;
+        options_->StartPort = atoi(StartPortStr.c_str());
+    }
 
+    arg_parser.Get("LadderServer", options_->ServerAddress);
+    output["LadderServer"] = options_->ServerAddress;
+
+    std::string CompOpp;
+    if (arg_parser.Get("ComputerOpponent", CompOpp)) {
+        options_->ComputerOpponent = true;
+        output["ComputerOpponent"] = "True";
+        std::string CompRace;
+
+        if (arg_parser.Get("ComputerRace", CompRace)){
+            options_->ComputerRace = StringToRace(CompRace, output);
+        } else {
+            // Random
+            options_->ComputerRace = StringToRace(" ", output);;
+        }
+
+        std::string CompDiff;
+        if (arg_parser.Get("ComputerDifficulty", CompDiff)){
+            options_->ComputerDifficulty =
+                StringToDifficulty(CompDiff, output);
+        } else {
+            // Easy
+            options_->ComputerDifficulty =
+                StringToDifficulty(" ", output);
+        }
+    }
+
+    std::string OpponentId;
+    if (arg_parser.Get("OpponentId", OpponentId)) {
+        options_->OpponentId = output["OpponentId"] = OpponentId;
+    }
+
+    std::string MapId;
+    if (arg_parser.Get("Map", MapId)){
+        output["Map"] = options_->maps = StringToMap(MapId, output);
+    }
+
+}
+
+int main(int argc, char *argv[]) {
     Coordinator coordinator;
     coordinator.LoadSettings(argc, argv);
 
-    Bot bot;
-    coordinator.SetParticipants(
-        {CreateParticipant(Race::Terran, &bot), CreateComputer(Race::Zerg)});
+    size_t num_agents;
+    Bot player;
+    const sc2::Race PlayerRace = sc2::Race::Terran;
 
-    coordinator.LaunchStarcraft();
-    coordinator.StartGame(maps[atoi(argv[1])]);
+    Options options;
+    std::map<std::string, std::string> output;
+    initOutput(output);
+    ParseArguments(argc, argv, &options, output);
 
+    for(const auto& kv:output){
+        printf("%-20s: %s\n", kv.first.c_str(), kv.second.c_str());
+    }
+
+    if (options.ComputerOpponent) {
+        num_agents = 1;
+        coordinator.SetParticipants({
+             CreateParticipant(PlayerRace, &player, "Invincibot"),
+             CreateComputer(options.ComputerRace, options.ComputerDifficulty)});
+        coordinator.LoadSettings(1, argv);
+        coordinator.LaunchStarcraft();
+        coordinator.StartGame(options.maps);
+    } else {
+        num_agents = 2;
+        coordinator.SetParticipants({
+            CreateParticipant(PlayerRace, &player, "Invincibot")
+        });
+        std::cout << "Connecting to port " << options.GamePort << "....." << std::endl;
+        coordinator.Connect(options.GamePort);
+        coordinator.SetupPorts(num_agents, options.StartPort, false);
+        // coordinator.SetRawAffectsSelection(true);
+        coordinator.JoinGame();
+    }
+
+    coordinator.SetTimeoutMS(10000);
+    std::cout << "Successfully joined game" << std::endl;
     while (coordinator.Update()) {
     }
 
     return 0;
 }
 
-
-
 // // #ifdef DEBUG
 // // int main(int argc, char* argv[]) {
 // //     if (argc < 2) {
-// //         std::cerr << "Provide either name of the map file or path to it!" << std::endl;
+// //         std::cerr << "Provide either name of the map file or path to it!"
+// << std::endl;
 // //         return -1;
 // //     }
 
@@ -78,101 +257,4 @@ int main(int argc, char* argv[]) {
 // //     return 0;
 // // }
 // // #else
-
-// namespace {
-
-// struct Options {
-//     Options(): GamePort(0), StartPort(0), ComputerOpponent(false) {
-//     }
-
-//     int32_t GamePort;
-//     int32_t StartPort;
-//     std::string ServerAddress;
-//     std::string OpponentId;
-//     bool ComputerOpponent;
-//     sc2::Difficulty ComputerDifficulty;
-//     sc2::Race ComputerRace;
-// };
-
-// void ParseArguments(int argc, char* argv[], Options* options_) {
-//     sc2::ArgParser arg_parser(argv[0]);
-//     arg_parser.AddOptions({
-//             {"-g", "--GamePort", "Port of client to connect to", false},
-//             {"-o", "--StartPort", "Starting server port", false},
-//             {"-l", "--LadderServer", "Ladder server address", false},
-//             {"-x", "--OpponentId", "PlayerId of opponent", false},
-//             {"-c", "--ComputerOpponent", "If we set up a computer opponent", false},
-//             {"-a", "--ComputerRace", "Race of computer oppent", false},
-//             {"-d", "--ComputerDifficulty", "Difficulty of computer opponent", false}
-//         });
-
-//     arg_parser.Parse(argc, argv);
-
-//     std::string GamePortStr;
-//     if (arg_parser.Get("GamePort", GamePortStr))
-//         options_->GamePort = atoi(GamePortStr.c_str());
-
-//     std::string StartPortStr;
-//     if (arg_parser.Get("StartPort", StartPortStr))
-//         options_->StartPort = atoi(StartPortStr.c_str());
-
-//     std::string OpponentId;
-//     if (arg_parser.Get("OpponentId", OpponentId))
-//         options_->OpponentId = OpponentId;
-
-//     arg_parser.Get("LadderServer", options_->ServerAddress);
-
-//     std::string CompOpp;
-//     if (arg_parser.Get("ComputerOpponent", CompOpp)) {
-//         options_->ComputerOpponent = true;
-//         std::string CompRace;
-
-//         if (arg_parser.Get("ComputerRace", CompRace))
-//             options_->ComputerRace = convert::StringToRace(CompRace);
-
-//         std::string CompDiff;
-//         if (arg_parser.Get("ComputerDifficulty", CompDiff))
-//             options_->ComputerDifficulty = convert::StringToDifficulty(CompDiff);
-//     }
-// }
-
-// }  // namespace
-
-// int main(int argc, char* argv[]) {
-//     Options options;
-//     ParseArguments(argc, argv, &options);
-
-//     sc2::Coordinator coordinator;
-//     Dispatcher bot(options.OpponentId);
-
-//     size_t num_agents;
-//     if (options.ComputerOpponent) {
-//         num_agents = 1;
-//         coordinator.SetParticipants({
-//             CreateParticipant(sc2::Race::Random, &bot, "Suvorov"),
-//             CreateComputer(options.ComputerRace, options.ComputerDifficulty)
-//             });
-//     } else {
-//         num_agents = 2;
-//         coordinator.SetParticipants({
-//             CreateParticipant(sc2::Race::Random, &bot, "Suvorov")
-//             });
-//     }
-
-//     std::cout << "Connecting to port " << options.GamePort << std::endl;
-//     coordinator.Connect(options.GamePort);
-//     coordinator.SetupPorts(num_agents, options.StartPort, false);
-//     coordinator.SetRawAffectsSelection(true);
-//     coordinator.JoinGame();
-//     coordinator.SetTimeoutMS(10000);
-//     std::cout << "Successfully joined game" << std::endl;
-
-//     while (coordinator.Update()) {
-//     }
-
-//     return 0;
-// }
-
-// #endif
-
 
