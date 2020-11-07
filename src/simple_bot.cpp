@@ -1,9 +1,12 @@
+// The MIT License (MIT)
+//
+// Copyright (c) 2017-2020 Qian Yu
+
 #include "simple_bot.h"
 
 #include <iostream>
 #include <sc2api/sc2_api.h>
 
-using namespace sc2;
 
 void Bot::OnGameStart() {
     // ClientEvents::OnGameStart();
@@ -17,34 +20,34 @@ void Bot::OnStep() {
     TryAttack();
 }
 
-void Bot::OnUnitIdle(const Unit *unit) {
+void Bot::OnUnitIdle(const sc2::Unit *unit) {
     switch (unit->unit_type.ToType()) {
-        case UNIT_TYPEID::TERRAN_COMMANDCENTER: {
-            GatheringPoint = Point2D(unit->pos.x, unit->pos.y);
-            Actions()->UnitCommand(unit, ABILITY_ID::TRAIN_SCV);
+        case sc2::UNIT_TYPEID::TERRAN_COMMANDCENTER: {
+            GatheringPoint = sc2::Point2D(unit->pos.x, unit->pos.y);
+            Actions()->UnitCommand(unit, sc2::ABILITY_ID::TRAIN_SCV);
             break;
         }
-        case UNIT_TYPEID::TERRAN_SCV: {
-            const Unit *mineral_target =
+        case sc2::UNIT_TYPEID::TERRAN_SCV: {
+            const sc2::Unit *mineral_target =
                 FindNearestMineralPatch(unit->pos);
             if (!mineral_target) {
                 break;
             }
-            Actions()->UnitCommand(unit, ABILITY_ID::SMART,
+            Actions()->UnitCommand(unit, sc2::ABILITY_ID::SMART,
                                    mineral_target);
             break;
         }
-        case UNIT_TYPEID::TERRAN_BARRACKS: {
-            Actions()->UnitCommand(unit, ABILITY_ID::TRAIN_MARINE);
+        case sc2::UNIT_TYPEID::TERRAN_BARRACKS: {
+            Actions()->UnitCommand(unit, sc2::ABILITY_ID::TRAIN_MARINE);
             break;
         }
-        case UNIT_TYPEID::TERRAN_MARINE: {
+        case sc2::UNIT_TYPEID::TERRAN_MARINE: {
             if (if_rush) {
-                const GameInfo &game_info = Observation()->GetGameInfo();
-                Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK,
+                const sc2::GameInfo &game_info = Observation()->GetGameInfo();
+                Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK,
                                        game_info.enemy_start_locations[0]);
             } else {
-                Actions()->UnitCommand(unit, ABILITY_ID::SMART,
+                Actions()->UnitCommand(unit, sc2::ABILITY_ID::SMART,
                                        GatheringPoint);
             }
             break;
@@ -55,10 +58,10 @@ void Bot::OnUnitIdle(const Unit *unit) {
     }
 }
 
-size_t Bot::CountUnitType(UNIT_TYPEID unit_type) {
+size_t Bot::CountUnitType(sc2::UNIT_TYPEID unit_type) {
     size_t count = 0;
 
-    Units units = Observation()->GetUnits(Unit::Alliance::Self);
+    sc2::Units units = Observation()->GetUnits(sc2::Unit::Alliance::Self);
     for (auto &unit : units) {
         if (unit->unit_type == unit_type) {
             count++;
@@ -68,19 +71,19 @@ size_t Bot::CountUnitType(UNIT_TYPEID unit_type) {
 }
 
 void Bot::TryAttack() {
-    if (CountUnitType(UNIT_TYPEID::TERRAN_MARINE) > 20) {
+    if (CountUnitType(sc2::UNIT_TYPEID::TERRAN_MARINE) > 20) {
         if_rush = true;
     }
 }
 
-bool Bot::TryBuildStructure(ABILITY_ID ability_type_for_structure,
-                            UNIT_TYPEID unit_type) {
-    const ObservationInterface *observation = Observation();
+bool Bot::TryBuildStructure(sc2::ABILITY_ID ability_type_for_structure,
+                            sc2::UNIT_TYPEID unit_type) {
+    const sc2::ObservationInterface *observation = Observation();
 
     // If a unit already is building a supply structure of this type, do
     // nothing. Also get an scv to build the structure.
-    const Unit *unit_to_build = nullptr;
-    Units units = observation->GetUnits(Unit::Alliance::Self);
+    const sc2::Unit *unit_to_build = nullptr;
+    sc2::Units units = observation->GetUnits(sc2::Unit::Alliance::Self);
     for (const auto &unit : units) {
         for (const auto &order : unit->orders) {
             if (order.ability_id == ability_type_for_structure) {
@@ -93,33 +96,33 @@ bool Bot::TryBuildStructure(ABILITY_ID ability_type_for_structure,
         }
     }
 
-    float rx = GetRandomScalar();
-    float ry = GetRandomScalar();
+    float rx = sc2::GetRandomScalar();
+    float ry = sc2::GetRandomScalar();
 
     Actions()->UnitCommand(unit_to_build, ability_type_for_structure,
-                           Point2D(unit_to_build->pos.x + rx * 15.0f,
+                           sc2::Point2D(unit_to_build->pos.x + rx * 15.0f,
                                    unit_to_build->pos.y + ry * 15.0f));
 
     return true;
 }
 
 bool Bot::TryBuildSupplyDepot() {
-    const ObservationInterface *observation = Observation();
+    const sc2::ObservationInterface *observation = Observation();
 
     // If we are not supply capped, don't build a supply depot.
     if (observation->GetFoodUsed() <= observation->GetFoodCap() - 2)
         return false;
 
     // Try and build a depot. Find a random SCV and give it the order.
-    return TryBuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT);
+    return TryBuildStructure(sc2::ABILITY_ID::BUILD_SUPPLYDEPOT);
 }
 
-const Unit *Bot::FindNearestMineralPatch(const Point2D &start) {
-    Units units = Observation()->GetUnits(Unit::Alliance::Neutral);
+const sc2::Unit *Bot::FindNearestMineralPatch(const sc2::Point2D &start) {
+    sc2::Units units = Observation()->GetUnits(sc2::Unit::Alliance::Neutral);
     float distance = std::numeric_limits<float>::max();
-    const Unit *target = nullptr;
+    const sc2::Unit *target = nullptr;
     for (const auto &u : units) {
-        if (u->unit_type == UNIT_TYPEID::NEUTRAL_MINERALFIELD) {
+        if (u->unit_type == sc2::UNIT_TYPEID::NEUTRAL_MINERALFIELD) {
             float d = DistanceSquared2D(u->pos, start);
             if (d < distance) {
                 distance = d;
@@ -132,13 +135,13 @@ const Unit *Bot::FindNearestMineralPatch(const Point2D &start) {
 }
 
 bool Bot::TryBuildBarracks() {
-    if (CountUnitType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT) < 1) {
+    if (CountUnitType(sc2::UNIT_TYPEID::TERRAN_SUPPLYDEPOT) < 1) {
         return false;
     }
 
-    if (CountUnitType(UNIT_TYPEID::TERRAN_BARRACKS) > 2) {
+    if (CountUnitType(sc2::UNIT_TYPEID::TERRAN_BARRACKS) > 2) {
         return false;
     }
 
-    return TryBuildStructure(ABILITY_ID::BUILD_BARRACKS);
+    return TryBuildStructure(sc2::ABILITY_ID::BUILD_BARRACKS);
 }
