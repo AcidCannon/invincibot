@@ -45,7 +45,7 @@ $ cmake ../
 $ VERBOSE=1 cmake --build . --parallel
 
 # Launch the bot with the specified path to a SC2 map, e.g.
-$ ./bin/invincibot
+$ ./bin/invincibot -c -a zerg -d Medium -m 0
 ```
 
 ## Playing against the built-in AI
