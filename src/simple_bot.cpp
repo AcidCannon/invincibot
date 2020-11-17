@@ -10,7 +10,7 @@
 
 void Bot::OnGameStart() {
     // ClientEvents::OnGameStart();
-    std::cout << "Hello, World!" << std::endl;
+    Actions()->SendChat("Good luck, Have fun");
 }
 
 void Bot::OnStep() {

@@ -4,6 +4,15 @@
 
 #include <sc2api/sc2_api.h>
 
+/**
+ * Usage:
+ * Given a sepecific legal build order, the program can execute them
+ * For example:
+ * supply depot -> supply depot -> bracc
+ * Some Premises:
+ * 1. The build order has to be legal. For example: have to follow the tech requirement
+ *
+ */
 class Bot : public sc2::Agent {
    public:
     virtual void OnGameStart() final;
