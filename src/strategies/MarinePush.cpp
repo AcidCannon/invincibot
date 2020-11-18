@@ -1,26 +1,26 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2017-2020 Qian Yu
+// Copyright (c) 2020 Qian Yu
 
-#include "simple_bot.h"
-
+#include "MarinePush.h"
+#include "tools/BuilderOrder.h"
 #include <iostream>
 #include <sc2api/sc2_api.h>
 
 
-void Bot::OnGameStart() {
+void MarinePush::OnGameStart() {
     // ClientEvents::OnGameStart();
     Actions()->SendChat("Good luck, Have fun");
 }
 
-void Bot::OnStep() {
+void MarinePush::OnStep() {
     // ClientEvents::OnStep();
     TryBuildSupplyDepot();
     TryBuildBarracks();
     TryAttack();
 }
 
-void Bot::OnUnitIdle(const sc2::Unit *unit) {
+void MarinePush::OnUnitIdle(const sc2::Unit *unit) {
     switch (unit->unit_type.ToType()) {
         case sc2::UNIT_TYPEID::TERRAN_COMMANDCENTER: {
             GatheringPoint = sc2::Point2D(unit->pos.x, unit->pos.y);
@@ -58,7 +58,7 @@ void Bot::OnUnitIdle(const sc2::Unit *unit) {
     }
 }
 
-size_t Bot::CountUnitType(sc2::UNIT_TYPEID unit_type) {
+size_t MarinePush::CountUnitType(sc2::UNIT_TYPEID unit_type) {
     size_t count = 0;
 
     sc2::Units units = Observation()->GetUnits(sc2::Unit::Alliance::Self);
@@ -70,13 +70,13 @@ size_t Bot::CountUnitType(sc2::UNIT_TYPEID unit_type) {
     return count;
 }
 
-void Bot::TryAttack() {
+void MarinePush::TryAttack() {
     if (CountUnitType(sc2::UNIT_TYPEID::TERRAN_MARINE) > 20) {
         if_rush = true;
     }
 }
 
-bool Bot::TryBuildStructure(sc2::ABILITY_ID ability_type_for_structure,
+bool MarinePush::TryBuildStructure(sc2::ABILITY_ID ability_type_for_structure,
                             sc2::UNIT_TYPEID unit_type) {
     const sc2::ObservationInterface *observation = Observation();
 
@@ -101,12 +101,12 @@ bool Bot::TryBuildStructure(sc2::ABILITY_ID ability_type_for_structure,
 
     Actions()->UnitCommand(unit_to_build, ability_type_for_structure,
                            sc2::Point2D(unit_to_build->pos.x + rx * 15.0f,
-                                   unit_to_build->pos.y + ry * 15.0f));
+                                        unit_to_build->pos.y + ry * 15.0f));
 
     return true;
 }
 
-bool Bot::TryBuildSupplyDepot() {
+bool MarinePush::TryBuildSupplyDepot() {
     const sc2::ObservationInterface *observation = Observation();
 
     // If we are not supply capped, don't build a supply depot.
@@ -117,7 +117,7 @@ bool Bot::TryBuildSupplyDepot() {
     return TryBuildStructure(sc2::ABILITY_ID::BUILD_SUPPLYDEPOT);
 }
 
-const sc2::Unit *Bot::FindNearestMineralPatch(const sc2::Point2D &start) {
+const sc2::Unit *MarinePush::FindNearestMineralPatch(const sc2::Point2D &start) {
     sc2::Units units = Observation()->GetUnits(sc2::Unit::Alliance::Neutral);
     float distance = std::numeric_limits<float>::max();
     const sc2::Unit *target = nullptr;
@@ -134,7 +134,7 @@ const sc2::Unit *Bot::FindNearestMineralPatch(const sc2::Point2D &start) {
 
 }
 
-bool Bot::TryBuildBarracks() {
+bool MarinePush::TryBuildBarracks() {
     if (CountUnitType(sc2::UNIT_TYPEID::TERRAN_SUPPLYDEPOT) < 1) {
         return false;
     }

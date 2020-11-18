@@ -1,15 +1,16 @@
 #include "BuilderOrder.h"
-
+#include "common/Builder.h"
 #include <sc2api/sc2_api.h>
 
 BuilderOrder::BuilderOrder()
     : m_minerals(0), m_vespene(0), m_available_food(0.0f) {}
 
 void BuilderOrder::OnStep() {
-    m_minerals = Observation()->GetMinerals();
-    m_vespene = Observation()->GetVespene();
+    const sc2::ObservationInterface* observer_;
+    m_minerals = observer_->GetMinerals();
+    m_vespene = observer_->GetVespene();
     m_available_food =
-        Observation()->GetFoodCap() - Observation()->GetFoodUsed();
+        observer_->GetFoodCap() - observer_->GetFoodUsed();
 
     if (!sequence.empty()) {
         Order cur = sequence.front();
@@ -19,10 +20,13 @@ void BuilderOrder::OnStep() {
     }
 }
 
-void BuildOrder::ScheduleOrder(sc2::UPGRADE_ID id_) {
-    sc2::UnitTypeData typeData = Observation().GetUnitTypeData(id_);
+void BuilderOrder::ScheduleOrder(sc2::UNIT_TYPEID id_) {
+    const sc2::ObservationInterface* observer_;
+    sc2::UnitTypeData typeData = observer_->GetUnitTypeData()[static_cast<sc2::UnitTypeID>(id_)];
     sequence.push(Order(typeData));
 }
+
+void BuilderOrder::AddSCV(sc2::Unit *unit) { build_.scvs.push_back(unit); }
 
 bool BuilderOrder::Build(Order *order) {
     if (m_minerals < order->mineral_cost) return false;
@@ -31,7 +35,7 @@ bool BuilderOrder::Build(Order *order) {
 
     if (m_available_food < order->food_required) return false;
 
-    if (TryBuildWithRandomLocation(order)) {
+    if (build_.TryBuildWithRandomLocation(order)) {
         m_minerals -= order->mineral_cost;
         m_vespene -= order->vespene_cost;
         m_available_food -= order->food_required;
@@ -40,10 +44,14 @@ bool BuilderOrder::Build(Order *order) {
     return false;
 }
 
-std::vector<Order> GetOrders() const { return sequence; }
+std::queue<Order> BuilderOrder::GetOrders() const { return sequence; }
 
-void PrintOrders() const {
-    for (auto order : sequence) {
-        cout << order.name << endl;
+void BuilderOrder::PrintOrders() const {
+    std::queue<Order> orders(sequence);
+    while(!orders.empty()) {
+        Order order = orders.front();
+        orders.pop();
+        std::cout << order.name << std::endl;
     }
 }
+

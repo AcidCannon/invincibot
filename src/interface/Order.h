@@ -27,7 +27,7 @@ struct Order {
     uint32_t mineral_cost;
     uint32_t vespene_cost;
 
-    float food_required;
+    unsigned int food_required;
 
     sc2::UnitTypeID unit_type_id;
     sc2::AbilityID ability_id;

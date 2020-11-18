@@ -1,19 +1,14 @@
+
 // The MIT License (MIT)
 //
-// Copyright (c) 2017-2020 Qian Yu
+// Copyright (c) 2020 Qian Yu
 
+#pragma once
 #include <sc2api/sc2_api.h>
 
-/**
- * Usage:
- * Given a sepecific legal build order, the program can execute them
- * For example:
- * supply depot -> supply depot -> bracc
- * Some Premises:
- * 1. The build order has to be legal. For example: have to follow the tech requirement
- *
- */
-class Bot : public sc2::Agent {
+#include "common/Builder.h"
+
+class MarinePush : public sc2::Agent {
    public:
     virtual void OnGameStart() final;
     virtual void OnStep() final;
@@ -22,12 +17,12 @@ class Bot : public sc2::Agent {
    private:
     size_t CountUnitType(sc2::UNIT_TYPEID unit_type);
     void TryAttack();
-    bool TryBuildStructure(sc2::ABILITY_ID ability_type_for_structure,
-                           sc2::UNIT_TYPEID unit_type = sc2::UNIT_TYPEID::TERRAN_SCV);
+    bool TryBuildStructure(
+        sc2::ABILITY_ID ability_type_for_structure,
+        sc2::UNIT_TYPEID unit_type = sc2::UNIT_TYPEID::TERRAN_SCV);
     bool TryBuildSupplyDepot();
     const sc2::Unit* FindNearestMineralPatch(const sc2::Point2D& start);
     bool TryBuildBarracks();
-
 
     bool if_rush = false;
     sc2::Point2D GatheringPoint;

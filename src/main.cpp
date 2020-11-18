@@ -2,7 +2,7 @@
 //
 // Copyright (c) 2017-2020 Alexander Kurbatov
 
-#include "simple_bot.h"
+#include "strategies/MarinePush.h"
 #include "core/Converter.h"
 
 #include <sc2api/sc2_coordinator.h>
@@ -108,7 +108,7 @@ int main(int argc, char *argv[]) {
     coordinator.LoadSettings(argc, argv);
 
     size_t num_agents;
-    Bot player;
+    MarinePush player;
     const sc2::Race PlayerRace = sc2::Race::Terran;
 
     Options options;

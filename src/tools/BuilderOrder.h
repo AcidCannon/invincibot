@@ -4,7 +4,7 @@
 #include <sc2api/sc2_typeenums.h>
 #include <sc2api/sc2_unit.h>
 #include <queue>
-
+#include "common/Builder.h"
 #include "interface/Order.h"
 
 class BuilderOrder {
@@ -15,12 +15,13 @@ class BuilderOrder {
 
     // void OnUnitCreated(const sc2::Unit& unit_);
 
-    void ScheduleOrder(sc2::UPGRADE_ID id_);
+    void ScheduleOrder(sc2::UNIT_TYPEID id_);
 
-    std::vector<Order> GetOrders() const;
+    std::queue<Order> GetOrders() const;
 
     void PrintOrders() const;
 
+    void AddSCV(sc2::Unit* unit);
     // int64_t CountScheduledOrders(sc2::UNIT_TYPEID id_) const;
 
    private:
@@ -29,7 +30,8 @@ class BuilderOrder {
     uint32_t m_minerals;
     uint32_t m_vespene;
 
-    float m_available_food;
+    Builder build_;
+    unsigned int m_available_food;
 
     std::queue<Order> sequence;
 };
