@@ -36,4 +36,13 @@ class MarinePush : public sc2::Agent {
     int num_of_terran_reaper = 0;
     int num_of_terran_scv = 0;
     void CollectVespene();
+
+    // From HZH
+    sc2::Point3D startLocation_;
+    std::vector<sc2::Point3D> expansions_;
+    void TryLowerSupplyDepot();
+    void TryUpgradeToOrbitalCommand();
+    bool TryExpand(sc2::AbilityID build_ability, sc2::UNIT_TYPEID unit_type);
+    bool TryBuildExpansionCommandCenter();
+    
 };
