@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2020 Qian Yu
+// Copyright (c) 2020 Qian Yu, Zijian Xi
 
 #include "MarinePush.h"
 #include "tools/BuilderOrder.h"
@@ -256,11 +256,25 @@ void MarinePush::CountUnitNumber() {
     num_of_terran_scv = CountUnitType(sc2::UNIT_TYPEID::TERRAN_SCV);
 }
 
+bool IsCarryingMineral(const sc2::Unit* unit) {
+    // Maybe exist several minerals being carried.
+    for(const auto &buff : unit->buffs) {
+        if (buff == sc2::BUFF_ID::CARRYMINERALFIELDMINERALS ||
+            buff == sc2::BUFF_ID::CARRYHIGHYIELDMINERALFIELDMINERALS) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void MarinePush::CollectVespene() {
     sc2::Units units = Observation()->GetUnits(sc2::Unit::Alliance::Self);
 
     std::vector<sc2::Unit> refineries;
+    std::vector<sc2::Unit> mining_scvs;
     
+    // Find all refineries that no more than 4 scvs working on it.
     for (const auto &unit : units) {
         if (unit->unit_type == sc2::UNIT_TYPEID::TERRAN_REFINERY) {
             if (unit->assigned_harvesters < unit->ideal_harvesters + 1) {
@@ -269,8 +283,36 @@ void MarinePush::CollectVespene() {
         }
     }
 
-    for(const auto &refinery: refineries) {
-        std::cout << refinery.vespene_contents << std::endl;
-        // TODO: Assign more SCVs to collect vespene.
+    if (refineries.empty()) {
+        return;
     }
+
+    // Find all scvs currently harvesting minerals.
+    units = Observation()->GetUnits(sc2::Unit::Alliance::Self);
+    for (const auto &unit : units) {
+        if (unit->unit_type == sc2::UNIT_TYPEID::TERRAN_SCV && !unit->orders.empty()) {
+            if (unit->orders.front().ability_id == sc2::ABILITY_ID::HARVEST_GATHER && !unit->buffs.empty()) {
+                if (IsCarryingMineral(unit)) {
+                    mining_scvs.push_back(*unit);
+                }
+            }
+        }
+    }
+
+    if (mining_scvs.empty()) {
+        return;
+    }
+
+    for(const auto &refinery: refineries) {
+        // std::cout << refinery.vespene_contents << std::endl;
+        // TODO: Assign more SCVs to collect vespene.
+        while (refinery.build_progress >= 1.0f &&
+               refinery.vespene_contents > 0 &&
+               refinery.assigned_harvesters < refinery.ideal_harvesters + 1 &&
+               !mining_scvs.empty()) {
+            Actions()->UnitCommand(&mining_scvs.back(), sc2::ABILITY_ID::HARVEST_GATHER, &refinery);
+            std::cout << refinery.assigned_harvesters << std::endl;
+            mining_scvs.pop_back();
+        }
+    }    
 }

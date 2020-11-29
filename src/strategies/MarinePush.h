@@ -32,8 +32,8 @@ class MarinePush : public sc2::Agent {
     const sc2::Unit* FindNearestVespeneGeyser(const sc2::Point2D& start);
     bool TryBuildFactory();
     void CountUnitNumber();
-    int num_of_terran_marine = 0;
-    int num_of_terran_reaper = 0;
-    int num_of_terran_scv = 0;
+    size_t num_of_terran_marine = 0;
+    size_t num_of_terran_reaper = 0;
+    size_t num_of_terran_scv = 0;
     void CollectVespene();
 };
