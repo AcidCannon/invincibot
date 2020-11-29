@@ -20,6 +20,9 @@ class MarinePush : public sc2::Agent {
     bool TryBuildStructure(
         sc2::ABILITY_ID ability_type_for_structure,
         sc2::UNIT_TYPEID unit_type = sc2::UNIT_TYPEID::TERRAN_SCV);
+    bool TryBuildStructureConcurrent(
+        sc2::ABILITY_ID ability_type_for_structure,
+        sc2::UNIT_TYPEID unit_type = sc2::UNIT_TYPEID::TERRAN_SCV);
     bool TryBuildSupplyDepot();
     const sc2::Unit* FindNearestMineralPatch(const sc2::Point2D& start);
     bool TryBuildBarracks();
@@ -35,5 +38,14 @@ class MarinePush : public sc2::Agent {
     size_t num_of_terran_marine = 0;
     size_t num_of_terran_reaper = 0;
     size_t num_of_terran_scv = 0;
+    size_t num_of_terran_widowmine = 0;
     void CollectVespene();
+    std::vector<sc2::Unit> FindUnderMiningRefinery();
+    std::vector<sc2::Unit> FindMiningScvs();
+    bool if_soldier_rush = false;
+    bool IfTrainReaper();
+    bool if_vehicle_rush = false;
+    bool TryBuildEngineeringBay();
+    bool TryBuildArmory();
+    bool IfUpgradeBarrack();
 };
