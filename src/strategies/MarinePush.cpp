@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2020 Qian Yu, Zijian Xi
+// Copyright (c) 2020 Qian Yu, Zijian Xi, Zihao Huang
 
 #include "MarinePush.h"
 #include "tools/BuilderOrder.h"
@@ -65,7 +65,8 @@ void MarinePush::OnUnitIdle(const sc2::Unit *unit) {
                 Actions()->UnitCommand(unit, sc2::ABILITY_ID::TRAIN_REAPER);
             } else if (IfUpgradeBarrack()) {
                 // TODO: BUILD TECH LAB
-                Actions()->UnitCommand(unit, sc2::ABILITY_ID::BUILD_REACTOR);
+                // Actions()->UnitCommand(unit, sc2::ABILITY_ID::BUILD_REACTOR);
+                {};
             }
             else{
                 Actions()->UnitCommand(unit, sc2::ABILITY_ID::TRAIN_MARINE);
@@ -446,7 +447,6 @@ bool MarinePush::TryBuildArmory() {
     }
 
     return TryBuildStructure(sc2::ABILITY_ID::BUILD_ARMORY);
-}
 }
 
 
