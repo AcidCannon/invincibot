@@ -48,4 +48,13 @@ class MarinePush : public sc2::Agent {
     bool TryBuildEngineeringBay();
     bool TryBuildArmory();
     bool IfUpgradeBarrack();
+
+    // From HZH
+    sc2::Point3D startLocation_;
+    std::vector<sc2::Point3D> expansions_;
+    void TryLowerSupplyDepot();
+    void TryUpgradeToOrbitalCommand();
+    bool TryExpand(sc2::AbilityID build_ability, sc2::UNIT_TYPEID unit_type);
+    bool TryBuildExpansionCommandCenter();
+    
 };

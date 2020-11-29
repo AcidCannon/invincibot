@@ -6,12 +6,20 @@
 #include "tools/BuilderOrder.h"
 #include <iostream>
 #include <sc2api/sc2_api.h>
+#include <sc2lib/sc2_lib.h>
+#include <sc2api/sc2_unit_filters.h>
 #include <vector>
+
 
 
 void MarinePush::OnGameStart() {
     // ClientEvents::OnGameStart();
     Actions()->SendChat("Break a leg :)");
+
+    // get start location and expansions
+    startLocation_ = Observation()->GetStartLocation();
+    expansions_ = sc2::search::CalculateExpansionLocations(Observation(), Query());
+    
 }
 
 void MarinePush::OnStep() {
@@ -25,6 +33,9 @@ void MarinePush::OnStep() {
     TryBuildEngineeringBay();
     TryBuildArmory();
     TryAttack();
+    TryLowerSupplyDepot();
+    TryUpgradeToOrbitalCommand();
+    TryBuildExpansionCommandCenter();
 }
 
 void MarinePush::OnUnitIdle(const sc2::Unit *unit) {
@@ -55,6 +66,9 @@ void MarinePush::OnUnitIdle(const sc2::Unit *unit) {
             } else if (IfUpgradeBarrack()) {
                 // TODO: BUILD TECH LAB
                 Actions()->UnitCommand(unit, sc2::ABILITY_ID::BUILD_REACTOR);
+            }
+            else{
+                Actions()->UnitCommand(unit, sc2::ABILITY_ID::TRAIN_MARINE);
             }
             break;
         }
@@ -432,4 +446,94 @@ bool MarinePush::TryBuildArmory() {
     }
 
     return TryBuildStructure(sc2::ABILITY_ID::BUILD_ARMORY);
+}
+}
+
+
+// From HZH
+void MarinePush::TryLowerSupplyDepot() {
+    const sc2::ObservationInterface *observation = Observation();
+
+    if (CountUnitType(sc2::UNIT_TYPEID::TERRAN_SUPPLYDEPOT) > 0) {
+        sc2::Units supply_depots = observation->GetUnits(sc2::Unit::Self, sc2::IsUnit(sc2::UNIT_TYPEID::TERRAN_SUPPLYDEPOT));
+
+        for (const auto& supply_depot : supply_depots) {
+            Actions()->UnitCommand(supply_depot, sc2::ABILITY_ID::MORPH_SUPPLYDEPOT_LOWER);
+        }
+    }
+
+}
+
+void MarinePush::TryUpgradeToOrbitalCommand() {
+    const sc2::ObservationInterface *observation = Observation();
+
+    if (CountUnitType(sc2::UNIT_TYPEID::TERRAN_BARRACKS) > 1) {
+        sc2::Units bases = observation->GetUnits(sc2::Unit::Self, sc2::IsTownHall());
+
+        for (const auto& base : bases) {
+            if (base->unit_type == sc2::UNIT_TYPEID::TERRAN_COMMANDCENTER && observation->GetMinerals() > 150) {
+
+                Actions()->UnitCommand(base, sc2::ABILITY_ID::MORPH_ORBITALCOMMAND);
+            }
+            
+        }
+    }
+
+}
+
+bool MarinePush::TryExpand(sc2::AbilityID build_ability, sc2::UNIT_TYPEID unit_type) {
+    const sc2::ObservationInterface* observation = Observation();
+    float minimum_distance = std::numeric_limits<float>::max();
+    sc2::Point3D closest_expansion;
+    for (const auto& expansion : expansions_) {
+        float current_distance = Distance2D(startLocation_, expansion);
+        if (current_distance < .01f) {
+            continue;
+        }
+
+        if (current_distance < minimum_distance) {
+            if (Query()->Placement(build_ability, expansion)) {
+                closest_expansion = expansion;
+                minimum_distance = current_distance;
+            }
+        }
+    }
+
+    // If a unit already is building, do nothing
+
+    const sc2::Unit *unit_to_build = nullptr;
+    sc2::Units units = observation->GetUnits(sc2::Unit::Alliance::Self);
+    for (const auto &unit : units) {
+        for (const auto &order : unit->orders) {
+            if (order.ability_id == build_ability) {
+                return false;
+            }
+        }
+
+        if (unit->unit_type == unit_type) {
+            unit_to_build = unit;
+        }
+    }
+    
+    // Check to see if unit can build there
+    if (Query()->Placement(build_ability, closest_expansion)) {
+        Actions()->UnitCommand(unit_to_build, build_ability, closest_expansion);
+        return true;
+    }
+    
+    return false;
+
+}
+
+bool MarinePush::TryBuildExpansionCommandCenter() {
+    const sc2::ObservationInterface* observation = Observation();
+    sc2::Units bases = observation->GetUnits(sc2::Unit::Alliance::Self, sc2::IsTownHall());
+    
+    if (bases.size() > 2) {
+        return false;
+    }
+    if (bases.size() < 1) {
+        return false;
+    }
+    return TryExpand(sc2::ABILITY_ID::BUILD_COMMANDCENTER, sc2::UNIT_TYPEID::TERRAN_SCV);
 }
