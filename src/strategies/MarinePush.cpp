@@ -27,9 +27,9 @@ void MarinePush::OnStep() {
     TryBuildRefinery();
     CollectVespene();
     TryBuildBarrackTechLab();
-    //TryBuildFactory();
-    //TryBuildEngineeringBay();
-    //TryBuildArmory();
+    // TryBuildFactory();
+    // TryBuildEngineeringBay();
+    // TryBuildArmory();
     TryAttack();
     TryLowerSupplyDepot();
     // TryUpgradeToOrbitalCommand();
