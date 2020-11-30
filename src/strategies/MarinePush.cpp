@@ -18,6 +18,16 @@ void MarinePush::OnGameStart() {
     startLocation_ = Observation()->GetStartLocation();
     expansions_ = sc2::search::CalculateExpansionLocations(Observation(), Query());
 
+    if(enemyFinder == nullptr){
+        const sc2::ObservationInterface *observation = Observation();
+        sc2::Units units = observation->GetUnits(sc2::Unit::Alliance::Self);
+        for (auto & unit : units) {
+            if(unit->unit_type == sc2::UNIT_TYPEID::TERRAN_SCV){
+                enemyFinder = unit;
+            }
+        }
+    }
+    FindEnemyPlace(enemyFinder);
 }
 
 void MarinePush::OnStep() {
@@ -25,9 +35,9 @@ void MarinePush::OnStep() {
     CountUnitNumber();
     TryBuildSupplyDepot();
     TryBuildBarracks();
-    TryBuildRefinery();
-    CollectVespene();
-    TryBuildBarrackTechLab();
+    // TryBuildRefinery();
+    // CollectVespene();
+    // TryBuildBarrackTechLab();
     // TryBuildFactory();
     // TryBuildEngineeringBay();
     // TryBuildArmory();
@@ -161,6 +171,9 @@ bool MarinePush::TryBuildStructureConcurrent(sc2::ABILITY_ID ability_type_for_st
     sc2::Units units = observation->GetUnits(sc2::Unit::Alliance::Self);
     for (const auto &unit : units) {
         bool skip = false;
+        if(enemyFinder != nullptr && unit->tag == enemyFinder->tag){
+            continue;
+        }
         for (const auto &order : unit->orders) {
             if (order.ability_id == ability_type_for_structure) {
                 skip = true;
@@ -192,6 +205,9 @@ bool MarinePush::TryBuildStructure(sc2::ABILITY_ID ability_type_for_structure,
     const sc2::Unit *unit_to_build = nullptr;
     sc2::Units units = observation->GetUnits(sc2::Unit::Alliance::Self);
     for (const auto &unit : units) {
+        if(enemyFinder != nullptr && unit->tag == enemyFinder->tag){
+            continue;
+        }
         for (const auto &order : unit->orders) {
             if (order.ability_id == ability_type_for_structure) {
                 return false;
@@ -538,6 +554,7 @@ bool MarinePush::TryBuildExpansionCommandCenter() {
     }
     return TryExpand(sc2::ABILITY_ID::BUILD_COMMANDCENTER, sc2::UNIT_TYPEID::TERRAN_SCV);
 }
+
 bool MarinePush::checkAttackCondition(ArmyType type) {
     if (enemyLocations.empty()) return false;
 
@@ -546,6 +563,7 @@ bool MarinePush::checkAttackCondition(ArmyType type) {
 
     return false;
 }
+
 sc2::Point2D MarinePush::FindNearestEnemyLocation(const sc2::Point2D &start) {
     const sc2::GameInfo &game_info = Observation()->GetGameInfo();
 

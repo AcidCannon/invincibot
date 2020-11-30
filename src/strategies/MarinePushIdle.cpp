@@ -41,14 +41,7 @@ void MarinePush::onArmoryIdle(const sc2::Unit* unit) {
 
 /** non-building units **/
 void MarinePush::onSCVIdle(const sc2::Unit *unit) {
-    // Task1: Find enemy's place
-    if( enemyFinder == nullptr ){
-        enemyFinder = unit;
-        FindEnemyPlace(unit);
-        return;
-    }
-
-    // Task2: Find Nearest Mineral Patch
+    // Task: Find Nearest Mineral Patch
     const sc2::Unit *mineral_target =
         FindNearestMineralPatch(unit->pos);
     if (mineral_target) {
