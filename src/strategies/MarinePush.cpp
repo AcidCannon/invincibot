@@ -19,7 +19,30 @@ void MarinePush::OnGameStart() {
     // get start location and expansions
     startLocation_ = Observation()->GetStartLocation();
     expansions_ = sc2::search::CalculateExpansionLocations(Observation(), Query());
-    
+    const sc2::GameInfo &game_info = Observation()->GetGameInfo();
+    for (const auto &info : game_info.player_info) {
+        switch (info.race_actual) {
+            case sc2::Race::Terran: {
+                std::cout << "Terran" << std::endl;
+                break;
+            }
+
+            case sc2::Race::Zerg: {
+                std::cout << "Zerg" << std::endl;
+                break;
+            }
+
+            case sc2::Race::Protoss: {
+                std::cout << "Protoss" << std::endl;
+                break;
+            }
+
+            default: {
+                std::cout << "Random" << std::endl;
+                break;
+            } 
+        }
+    }
 }
 
 void MarinePush::OnStep() {
@@ -27,15 +50,15 @@ void MarinePush::OnStep() {
     CountUnitNumber();
     TryBuildSupplyDepot();
     TryBuildBarracks();
-    TryBuildRefinery();
-    CollectVespene();
-    TryBuildFactory();
-    TryBuildEngineeringBay();
-    TryBuildArmory();
+    //TryBuildRefinery();
+    //CollectVespene();
+    //TryBuildFactory();
+    //TryBuildEngineeringBay();
+    //TryBuildArmory();
     TryAttack();
     TryLowerSupplyDepot();
-    TryUpgradeToOrbitalCommand();
-    TryBuildExpansionCommandCenter();
+    //TryUpgradeToOrbitalCommand();
+    //TryBuildExpansionCommandCenter();
 }
 
 void MarinePush::OnUnitIdle(const sc2::Unit *unit) {
@@ -316,7 +339,7 @@ bool MarinePush::TryBuildBarracks() {
         return false;
     }
 
-    if (CountUnitType(sc2::UNIT_TYPEID::TERRAN_BARRACKS) > 3) {
+    if (CountUnitType(sc2::UNIT_TYPEID::TERRAN_BARRACKS) > 7) {
         return false;
     }
 
