@@ -30,132 +30,78 @@ void MarinePush::OnStep() {
     TryBuildRefinery();
     CollectVespene();
     TryBuildBarrackTechLab();
-    TryBuildFactory();
-    TryBuildEngineeringBay();
-    TryBuildArmory();
+    // TryBuildFactory();
+    // TryBuildEngineeringBay();
+    // TryBuildArmory();
     TryAttack();
     TryLowerSupplyDepot();
-    TryUpgradeToOrbitalCommand();
-    TryBuildExpansionCommandCenter();
+    // TryUpgradeToOrbitalCommand();
+    // TryBuildExpansionCommandCenter();
+
+    if (enemyLocations.empty() && enemyFinder != nullptr && !enemyFinder->is_alive) {
+        enemyLocations.emplace_back(enemyFinder->pos.x, enemyFinder->pos.y);
+        std::cout << enemyFinder->pos.x << " " <<  enemyFinder->pos.y << std::endl;
+    }
 }
 
 void MarinePush::OnUnitIdle(const sc2::Unit *unit) {
     switch (unit->unit_type.ToType()) {
         case sc2::UNIT_TYPEID::TERRAN_COMMANDCENTER: {
-            GatheringPoint = sc2::Point2D(unit->pos.x, unit->pos.y);
-            CommandCentrePoint = sc2::Point2D(unit->pos.x, unit->pos.y);
-            // std::cout << "Command centre coord: "<< unit->pos.x << " " << unit->pos.y << std::endl;
-            if (CountUnitType(sc2::UNIT_TYPEID::TERRAN_SCV) < 22) {
-                Actions()->UnitCommand(unit, sc2::ABILITY_ID::TRAIN_SCV);
-            }
+            onCommandCenterIdle(unit);
             break;
         }
         case sc2::UNIT_TYPEID::TERRAN_SCV: {
-            const sc2::Unit *mineral_target =
-                FindNearestMineralPatch(unit->pos);
-            if (!mineral_target) {
-                break;
-            }
-            Actions()->UnitCommand(unit, sc2::ABILITY_ID::SMART,
-                                   mineral_target);
+            onSCVIdle(unit);
             break;
         }
         case sc2::UNIT_TYPEID::TERRAN_BARRACKS: {
-            Actions()->UnitCommand(unit, sc2::ABILITY_ID::TRAIN_MARINE);
-            if (IfTrainReaper()) {
-                Actions()->UnitCommand(unit, sc2::ABILITY_ID::TRAIN_REAPER);
-            } else if (IfUpgradeBarrack()) {
-                // Actions()->UnitCommand(unit, sc2::ABILITY_ID::BUILD_REACTOR);
-                // Build Marauder
-                Actions()->UnitCommand(unit, sc2::ABILITY_ID::TRAIN_MARAUDER);
-            }
-            else {
-                Actions()->UnitCommand(unit, sc2::ABILITY_ID::TRAIN_MARINE);
-            }
+            onBarracksIdle(unit);
             break;
         }
         case sc2::UNIT_TYPEID::TERRAN_MARINE: {
-            if (if_soldier_rush) {
-                //priori to attack main structure
-                const sc2::Unit* enemy_unit = nullptr;
-                if (FindEnemyMainStructure(Observation(), enemy_unit)) {
-                    Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK, enemy_unit);
-                    break;
-                }
-                const sc2::GameInfo &game_info = Observation()->GetGameInfo();
-                Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK,
-                                       game_info.enemy_start_locations.front());
-                if_soldier_rush = false;
-            } else {
-                Actions()->UnitCommand(unit, sc2::ABILITY_ID::SMART,
-                                       GatheringPoint);
-            }
+            onMarineIdle(unit);
             break;
         }
         case sc2::UNIT_TYPEID::TERRAN_MARAUDER: {
-            if (if_soldier_rush) {
-                const sc2::GameInfo &game_info = Observation()->GetGameInfo();
-                Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK,
-                                       game_info.enemy_start_locations.front());
-                if_soldier_rush = false;
-            } else {
-                Actions()->UnitCommand(unit, sc2::ABILITY_ID::SMART,
-                                       GatheringPoint);
-            }
+            onMarauderIdle(unit);
             break;
         }
         case sc2::UNIT_TYPEID::TERRAN_REAPER: {
-            if (if_soldier_rush) {
-                const sc2::GameInfo &game_info = Observation()->GetGameInfo();
-                Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK,
-                                       game_info.enemy_start_locations.front());
-            } else {
-                Actions()->UnitCommand(unit, sc2::ABILITY_ID::SMART,
-                                       GatheringPoint);
-            }
+            onReaperIdle(unit);
             break;
         }
         case sc2::UNIT_TYPEID::TERRAN_FACTORY: {
-            // if (CountUnitType(sc2::UNIT_TYPEID::TERRAN_WIDOWMINE) < 4) {
-            //     Actions()->UnitCommand(unit, sc2::ABILITY_ID::TRAIN_WIDOWMINE);
-            // }
-            Actions()->UnitCommand(unit, sc2::ABILITY_ID::TRAIN_HELLION);
+            onFactoryIdle(unit);
             break;
         }
         case sc2::UNIT_TYPEID::TERRAN_WIDOWMINE: {
-            Actions()->UnitCommand(unit, sc2::ABILITY_ID::BURROWDOWN_WIDOWMINE);
+            onWidowmineIdle(unit);
             break;
         }
         case sc2::UNIT_TYPEID::TERRAN_HELLION: {
-            if (if_vehicle_rush) {
-                if_vehicle_rush = false;
-                //priori to attack main structure
-                const sc2::Unit* enemy_unit = nullptr;
-                if (FindEnemyMainStructure(Observation(), enemy_unit)) {
-                    Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK, enemy_unit);
-                    break;
-                }
-                const sc2::GameInfo &game_info = Observation()->GetGameInfo();
-                Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK,
-                                       game_info.enemy_start_locations.front());
-            } else {
-                Actions()->UnitCommand(unit, sc2::ABILITY_ID::SMART,
-                                       GatheringPoint);
-            }
+            onHellionIdle(unit);
             break;
         }
         case sc2::UNIT_TYPEID::TERRAN_ENGINEERINGBAY: {
-            Actions()->UnitCommand(unit, sc2::ABILITY_ID::RESEARCH_TERRANINFANTRYARMOR);
+            onEngineeringBayIdle(unit);
             //Actions()->UnitCommand(unit, sc2::ABILITY_ID::RESEARCH_TERRANINFANTRYWEAPONS);
             break;
         }
         case sc2::UNIT_TYPEID::TERRAN_ARMORY: {
-            Actions()->UnitCommand(unit, sc2::ABILITY_ID::RESEARCH_TERRANVEHICLEWEAPONS);
+            onArmoryIdle(unit);
             break;
         }
         default: {
             break;
         }
+    }
+}
+
+void MarinePush::FindEnemyPlace(const sc2::Unit* unit) {
+    const sc2::GameInfo &game_info = Observation()->GetGameInfo();
+    for(auto dest : game_info.enemy_start_locations){
+        Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK,
+                               dest, true);
     }
 }
 
@@ -594,4 +540,12 @@ bool MarinePush::TryBuildExpansionCommandCenter() {
         return false;
     }
     return TryExpand(sc2::ABILITY_ID::BUILD_COMMANDCENTER, sc2::UNIT_TYPEID::TERRAN_SCV);
+}
+bool MarinePush::checkAttackCondition(ArmyType type) {
+    if(enemyLocations.empty()) return false;
+
+    if(type == solider && if_soldier_rush) return true;
+    if(type == vehicle && if_vehicle_rush) return true;
+
+    return false;
 }
