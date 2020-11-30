@@ -29,6 +29,7 @@ void MarinePush::OnStep() {
     TryBuildBarracks();
     TryBuildRefinery();
     CollectVespene();
+    TryBuildBarrackTechLab();
     TryBuildFactory();
     TryBuildEngineeringBay();
     TryBuildArmory();
@@ -64,16 +65,34 @@ void MarinePush::OnUnitIdle(const sc2::Unit *unit) {
             if (IfTrainReaper()) {
                 Actions()->UnitCommand(unit, sc2::ABILITY_ID::TRAIN_REAPER);
             } else if (IfUpgradeBarrack()) {
-                // TODO: BUILD TECH LAB
                 // Actions()->UnitCommand(unit, sc2::ABILITY_ID::BUILD_REACTOR);
-                {};
+                // Build Marauder
+                Actions()->UnitCommand(unit, sc2::ABILITY_ID::TRAIN_MARAUDER);
             }
-            else{
+            else {
                 Actions()->UnitCommand(unit, sc2::ABILITY_ID::TRAIN_MARINE);
             }
             break;
         }
         case sc2::UNIT_TYPEID::TERRAN_MARINE: {
+            if (if_soldier_rush) {
+                //priori to attack main structure
+                const sc2::Unit* enemy_unit = nullptr;
+                if (FindEnemyMainStructure(Observation(), enemy_unit)) {
+                    Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK, enemy_unit);
+                    break;
+                }
+                const sc2::GameInfo &game_info = Observation()->GetGameInfo();
+                Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK,
+                                       game_info.enemy_start_locations.front());
+                if_soldier_rush = false;
+            } else {
+                Actions()->UnitCommand(unit, sc2::ABILITY_ID::SMART,
+                                       GatheringPoint);
+            }
+            break;
+        }
+        case sc2::UNIT_TYPEID::TERRAN_MARAUDER: {
             if (if_soldier_rush) {
                 const sc2::GameInfo &game_info = Observation()->GetGameInfo();
                 Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK,
@@ -110,6 +129,12 @@ void MarinePush::OnUnitIdle(const sc2::Unit *unit) {
         case sc2::UNIT_TYPEID::TERRAN_HELLION: {
             if (if_vehicle_rush) {
                 if_vehicle_rush = false;
+                //priori to attack main structure
+                const sc2::Unit* enemy_unit = nullptr;
+                if (FindEnemyMainStructure(Observation(), enemy_unit)) {
+                    Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK, enemy_unit);
+                    break;
+                }
                 const sc2::GameInfo &game_info = Observation()->GetGameInfo();
                 Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK,
                                        game_info.enemy_start_locations.front());
@@ -117,18 +142,35 @@ void MarinePush::OnUnitIdle(const sc2::Unit *unit) {
                 Actions()->UnitCommand(unit, sc2::ABILITY_ID::SMART,
                                        GatheringPoint);
             }
+            break;
         }
         case sc2::UNIT_TYPEID::TERRAN_ENGINEERINGBAY: {
             Actions()->UnitCommand(unit, sc2::ABILITY_ID::RESEARCH_TERRANINFANTRYARMOR);
             //Actions()->UnitCommand(unit, sc2::ABILITY_ID::RESEARCH_TERRANINFANTRYWEAPONS);
+            break;
         }
         case sc2::UNIT_TYPEID::TERRAN_ARMORY: {
             Actions()->UnitCommand(unit, sc2::ABILITY_ID::RESEARCH_TERRANVEHICLEWEAPONS);
+            break;
         }
         default: {
             break;
         }
     }
+}
+
+bool MarinePush::FindEnemyMainStructure(const sc2::ObservationInterface* observation, const sc2::Unit*& enemy_unit) {
+    sc2::Units enemy_units = observation->GetUnits(sc2::Unit::Alliance::Enemy);
+    for (const auto unit : enemy_units) {
+        if (unit->unit_type == sc2::UNIT_TYPEID::TERRAN_COMMANDCENTER ||
+            unit->unit_type == sc2::UNIT_TYPEID::PROTOSS_NEXUS ||
+            unit->unit_type == sc2::UNIT_TYPEID::ZERG_HATCHERY) {
+            enemy_unit = unit;
+            return true;
+        }
+    }
+
+    return false;
 }
 
 bool MarinePush::IfUpgradeBarrack() {
@@ -464,6 +506,22 @@ void MarinePush::TryLowerSupplyDepot() {
 
 }
 
+void MarinePush::TryBuildBarrackTechLab() {
+    const sc2::ObservationInterface *observation = Observation();
+    // sc2::Units barracks_tech = observation->GetUnits(Unit::Self, IsUnit(UNIT_TYPEID::TERRAN_BARRACKSTECHLAB));
+
+    sc2::Units barracks = observation->GetUnits(sc2::Unit::Self, sc2::IsUnit(sc2::UNIT_TYPEID::TERRAN_BARRACKS));
+    for (const auto& barrack : barracks) {
+        if(IfUpgradeBarrack() && CountUnitType(sc2::UNIT_TYPEID::TERRAN_BARRACKS) > 1 && CountUnitType(sc2::UNIT_TYPEID::TERRAN_BARRACKSTECHLAB) < 3) {
+            float rx = sc2::GetRandomScalar();
+            float ry = sc2::GetRandomScalar();
+            Actions()->UnitCommand(barrack, sc2::ABILITY_ID::BUILD_TECHLAB_BARRACKS,
+                                   sc2::Point2D(barrack->pos.x + rx * 15.0f,
+                                                barrack->pos.y + ry * 15.0f));
+        } 
+    }
+}
+
 void MarinePush::TryUpgradeToOrbitalCommand() {
     const sc2::ObservationInterface *observation = Observation();
 
@@ -529,7 +587,7 @@ bool MarinePush::TryBuildExpansionCommandCenter() {
     const sc2::ObservationInterface* observation = Observation();
     sc2::Units bases = observation->GetUnits(sc2::Unit::Alliance::Self, sc2::IsTownHall());
     
-    if (bases.size() > 2) {
+    if (bases.size() > 1) {
         return false;
     }
     if (bases.size() < 1) {

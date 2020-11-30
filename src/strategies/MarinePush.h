@@ -52,6 +52,8 @@ class MarinePush : public sc2::Agent {
     // From HZH
     sc2::Point3D startLocation_;
     std::vector<sc2::Point3D> expansions_;
+    bool FindEnemyMainStructure(const sc2::ObservationInterface* observation, const sc2::Unit*& enemy_unit);
+    void TryBuildBarrackTechLab();
     void TryLowerSupplyDepot();
     void TryUpgradeToOrbitalCommand();
     bool TryExpand(sc2::AbilityID build_ability, sc2::UNIT_TYPEID unit_type);
