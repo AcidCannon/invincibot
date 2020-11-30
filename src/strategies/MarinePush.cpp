@@ -24,9 +24,9 @@ void MarinePush::OnStep() {
     CountUnitNumber();
     TryBuildSupplyDepot();
     TryBuildBarracks();
-    TryBuildRefinery();
-    CollectVespene();
-    TryBuildBarrackTechLab();
+    // TryBuildRefinery();
+    // CollectVespene();
+    ///TryBuildBarrackTechLab();
     // TryBuildFactory();
     // TryBuildEngineeringBay();
     // TryBuildArmory();
