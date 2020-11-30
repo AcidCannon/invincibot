@@ -20,6 +20,9 @@ class MarinePush : public sc2::Agent {
     bool TryBuildStructure(
         sc2::ABILITY_ID ability_type_for_structure,
         sc2::UNIT_TYPEID unit_type = sc2::UNIT_TYPEID::TERRAN_SCV);
+    bool TryBuildStructureConcurrent(
+        sc2::ABILITY_ID ability_type_for_structure,
+        sc2::UNIT_TYPEID unit_type = sc2::UNIT_TYPEID::TERRAN_SCV);
     bool TryBuildSupplyDepot();
     const sc2::Unit* FindNearestMineralPatch(const sc2::Point2D& start);
     bool TryBuildBarracks();
@@ -32,14 +35,25 @@ class MarinePush : public sc2::Agent {
     const sc2::Unit* FindNearestVespeneGeyser(const sc2::Point2D& start);
     bool TryBuildFactory();
     void CountUnitNumber();
-    int num_of_terran_marine = 0;
-    int num_of_terran_reaper = 0;
-    int num_of_terran_scv = 0;
+    size_t num_of_terran_marine = 0;
+    size_t num_of_terran_reaper = 0;
+    size_t num_of_terran_scv = 0;
+    size_t num_of_terran_widowmine = 0;
     void CollectVespene();
+    std::vector<sc2::Unit> FindUnderMiningRefinery();
+    std::vector<sc2::Unit> FindMiningScvs();
+    bool if_soldier_rush = false;
+    bool IfTrainReaper();
+    bool if_vehicle_rush = false;
+    bool TryBuildEngineeringBay();
+    bool TryBuildArmory();
+    bool IfUpgradeBarrack();
 
     // From HZH
     sc2::Point3D startLocation_;
     std::vector<sc2::Point3D> expansions_;
+    bool FindEnemyMainStructure(const sc2::ObservationInterface* observation, const sc2::Unit*& enemy_unit);
+    void TryBuildBarrackTechLab();
     void TryLowerSupplyDepot();
     void TryUpgradeToOrbitalCommand();
     bool TryExpand(sc2::AbilityID build_ability, sc2::UNIT_TYPEID unit_type);
