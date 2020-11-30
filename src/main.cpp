@@ -2,16 +2,16 @@
 //
 // Copyright (c) 2017-2020 Alexander Kurbatov
 
+#include "strategies/BracketPush.h"
 #include "strategies/MarinePush.h"
+
 #include "core/Converter.h"
 
 #include <sc2api/sc2_coordinator.h>
 #include <sc2api/sc2_gametypes.h>
 #include <sc2utils/sc2_arg_parser.h>
-#include <sc2utils/sc2_manage_process.h>
 
 #include <iostream>
-#include <string>
 #include <map>
 namespace {
 struct Options {
@@ -147,43 +147,4 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-// #ifdef DEBUG
-// int main(int argc, char* argv[]) {
-//     if (argc < 2) {
-//         std::cerr << "Provide either name of the map file or path to it!"
-// << std::endl;
-//         return -1;
-//     }
-
-//     Historican::Init("history.log");
-
-//     sc2::Coordinator coordinator;
-//     coordinator.LoadSettings(argc, argv);
-
-//     // NOTE (alkurbatov): Uncomment to start the game in full screen mode.
-//     // coordinator.SetFullScreen(true);
-
-//     // NOTE (alkurbatov): Uncomment to play at normal speed.
-//     // coordinator.SetRealtime(true);
-
-//     Dispatcher bot("TrainingDummy");
-//     coordinator.SetParticipants({
-//         CreateParticipant(sc2::Race::Random, &bot, "Suvorov"),
-//         CreateComputer(
-//             sc2::Race::Random,
-//             sc2::Difficulty::CheatInsane,
-//             sc2::AIBuild::Rush,
-//             "CheatInsane"
-//         )
-//     });
-
-//     coordinator.LaunchStarcraft();
-//     coordinator.StartGame(argv[1]);
-
-//     while (coordinator.Update()) {
-//     }
-
-//     return 0;
-// }
-// #else
 
