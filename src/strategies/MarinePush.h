@@ -29,15 +29,8 @@ class MarinePush : public sc2::Agent {
     bool TryBuildStructureConcurrent(
         sc2::ABILITY_ID ability_type_for_structure,
         sc2::UNIT_TYPEID unit_type = sc2::UNIT_TYPEID::TERRAN_SCV);
-    bool TryBuildSupplyDepot();
-    const sc2::Unit* FindNearestMineralPatch(const sc2::Point2D& start);
-    bool TryBuildBarracks();
 
-    bool TryBuildRefinery();
-    bool TryBuildRefineryNearby();
-    const sc2::Unit* FindNearestVespeneGeyser(const sc2::Point2D& start);
-    bool TryBuildFactory();
-    void CountUnitNumber();
+
 
     void CollectVespene();
     std::vector<sc2::Unit> FindUnderMiningRefinery();
@@ -52,15 +45,29 @@ class MarinePush : public sc2::Agent {
 
 
     // From HZH
-    bool FindEnemyMainStructure(const sc2::ObservationInterface* observation, const sc2::Unit*& enemy_unit);
-    void TryBuildBarrackTechLab();
+
     void TryLowerSupplyDepot();
     void TryUpgradeToOrbitalCommand();
     bool TryExpand(sc2::AbilityID build_ability, sc2::UNIT_TYPEID unit_type);
+
+
+    /** Building Related Functions **/
+    bool TryBuildSupplyDepot();
+    bool TryBuildBarracks();
+    bool TryBuildRefinery();
+    bool TryBuildRefineryNearby();
+    bool TryBuildFactory();
     bool TryBuildExpansionCommandCenter();
+    void TryBuildBarrackTechLab();
 
     /** Helper Functions **/
     bool checkAttackCondition(ArmyType type);
+    void CountUnitNumber();
+    static bool FindEnemyMainStructure(const sc2::ObservationInterface* observation, const sc2::Unit*& enemy_unit);
+    const sc2::Unit* FindNearestMineralPatch(const sc2::Point2D& start);
+    const sc2::Unit* FindNearestVespeneGeyser(const sc2::Point2D& start);
+    sc2::Point2D FindNearestEnemyLocation(const sc2::Point2D& start);
+
 
     /** onUnitIdle **/
     #include "MarinePushIdle.h"

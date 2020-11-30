@@ -10,8 +10,6 @@
 #include <sc2api/sc2_unit_filters.h>
 #include <vector>
 
-
-
 void MarinePush::OnGameStart() {
     // ClientEvents::OnGameStart();
     Actions()->SendChat("Break a leg :)");
@@ -19,7 +17,7 @@ void MarinePush::OnGameStart() {
     // get start location and expansions
     startLocation_ = Observation()->GetStartLocation();
     expansions_ = sc2::search::CalculateExpansionLocations(Observation(), Query());
-    
+
 }
 
 void MarinePush::OnStep() {
@@ -39,8 +37,8 @@ void MarinePush::OnStep() {
     // TryBuildExpansionCommandCenter();
 
     if (enemyLocations.empty() && enemyFinder != nullptr && !enemyFinder->is_alive) {
-        enemyLocations.emplace_back(enemyFinder->pos.x, enemyFinder->pos.y);
-        std::cout << enemyFinder->pos.x << " " <<  enemyFinder->pos.y << std::endl;
+        enemyLocations.push_back(FindNearestEnemyLocation(sc2::Point2D(enemyFinder->pos.x, enemyFinder->pos.y)));
+        std::cout << enemyFinder->pos.x << " " << enemyFinder->pos.y << std::endl;
     }
 }
 
@@ -97,15 +95,15 @@ void MarinePush::OnUnitIdle(const sc2::Unit *unit) {
     }
 }
 
-void MarinePush::FindEnemyPlace(const sc2::Unit* unit) {
+void MarinePush::FindEnemyPlace(const sc2::Unit *unit) {
     const sc2::GameInfo &game_info = Observation()->GetGameInfo();
-    for(auto dest : game_info.enemy_start_locations){
+    for (auto dest : game_info.enemy_start_locations) {
         Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK,
                                dest, true);
     }
 }
 
-bool MarinePush::FindEnemyMainStructure(const sc2::ObservationInterface* observation, const sc2::Unit*& enemy_unit) {
+bool MarinePush::FindEnemyMainStructure(const sc2::ObservationInterface *observation, const sc2::Unit *&enemy_unit) {
     sc2::Units enemy_units = observation->GetUnits(sc2::Unit::Alliance::Enemy);
     for (const auto unit : enemy_units) {
         if (unit->unit_type == sc2::UNIT_TYPEID::TERRAN_COMMANDCENTER ||
@@ -115,7 +113,6 @@ bool MarinePush::FindEnemyMainStructure(const sc2::ObservationInterface* observa
             return true;
         }
     }
-
     return false;
 }
 
@@ -156,7 +153,7 @@ void MarinePush::TryAttack() {
 }
 
 bool MarinePush::TryBuildStructureConcurrent(sc2::ABILITY_ID ability_type_for_structure,
-                            sc2::UNIT_TYPEID unit_type) {
+                                             sc2::UNIT_TYPEID unit_type) {
     const sc2::ObservationInterface *observation = Observation();
 
     // Get an scv to build the structure.
@@ -187,7 +184,7 @@ bool MarinePush::TryBuildStructureConcurrent(sc2::ABILITY_ID ability_type_for_st
 }
 
 bool MarinePush::TryBuildStructure(sc2::ABILITY_ID ability_type_for_structure,
-                            sc2::UNIT_TYPEID unit_type) {
+                                   sc2::UNIT_TYPEID unit_type) {
     const sc2::ObservationInterface *observation = Observation();
 
     // If a unit already is building a supply structure of this type, do
@@ -241,10 +238,9 @@ const sc2::Unit *MarinePush::FindNearestMineralPatch(const sc2::Point2D &start) 
         }
     }
     return target;
-
 }
 
-bool IsVespeneGeyser(const sc2::Unit* unit) {
+bool IsVespeneGeyser(const sc2::Unit *unit) {
     // Maybe exist several vespene geysers can be used.
     auto type_of_unit = unit->unit_type.ToType();
     if (type_of_unit == sc2::UNIT_TYPEID::NEUTRAL_VESPENEGEYSER ||
@@ -343,9 +339,9 @@ void MarinePush::CountUnitNumber() {
     num_of_terran_widowmine = CountUnitType(sc2::UNIT_TYPEID::TERRAN_WIDOWMINE);
 }
 
-bool IsCarryingMineral(const sc2::Unit* unit) {
+bool IsCarryingMineral(const sc2::Unit *unit) {
     // Maybe exist several minerals being carried.
-    for(const auto &buff : unit->buffs) {
+    for (const auto &buff : unit->buffs) {
         if (buff == sc2::BUFF_ID::CARRYMINERALFIELDMINERALS ||
             buff == sc2::BUFF_ID::CARRYHIGHYIELDMINERALFIELDMINERALS) {
             return true;
@@ -366,7 +362,7 @@ std::vector<sc2::Unit> MarinePush::FindUnderMiningRefinery() {
             unit->build_progress >= 1.0f &&
             unit->vespene_contents > 0 &&
             unit->assigned_harvesters < unit->ideal_harvesters) {
-                refineries.push_back(*unit);
+            refineries.push_back(*unit);
         }
     }
 
@@ -402,15 +398,15 @@ void MarinePush::CollectVespene() {
         return;
     }
 
-    for(const auto &refinery: refineries) {
+    for (const auto &refinery: refineries) {
         // std::cout << refinery.vespene_contents << std::endl;
         // Assign more SCVs to collect vespene.
         while (refinery.assigned_harvesters < refinery.ideal_harvesters &&
-               !mining_scvs.empty()) {
+            !mining_scvs.empty()) {
             Actions()->UnitCommand(&mining_scvs.back(), sc2::ABILITY_ID::HARVEST_GATHER, &refinery);
             return;
         }
-    }    
+    }
 }
 
 bool MarinePush::TryBuildEngineeringBay() {
@@ -430,22 +426,22 @@ bool MarinePush::TryBuildArmory() {
         return false;
     }
 
-    if(CountUnitType(sc2::UNIT_TYPEID::TERRAN_ARMORY) > 0) {
+    if (CountUnitType(sc2::UNIT_TYPEID::TERRAN_ARMORY) > 0) {
         return false;
     }
 
     return TryBuildStructure(sc2::ABILITY_ID::BUILD_ARMORY);
 }
 
-
 // From HZH
 void MarinePush::TryLowerSupplyDepot() {
     const sc2::ObservationInterface *observation = Observation();
 
     if (CountUnitType(sc2::UNIT_TYPEID::TERRAN_SUPPLYDEPOT) > 0) {
-        sc2::Units supply_depots = observation->GetUnits(sc2::Unit::Self, sc2::IsUnit(sc2::UNIT_TYPEID::TERRAN_SUPPLYDEPOT));
+        sc2::Units
+            supply_depots = observation->GetUnits(sc2::Unit::Self, sc2::IsUnit(sc2::UNIT_TYPEID::TERRAN_SUPPLYDEPOT));
 
-        for (const auto& supply_depot : supply_depots) {
+        for (const auto &supply_depot : supply_depots) {
             Actions()->UnitCommand(supply_depot, sc2::ABILITY_ID::MORPH_SUPPLYDEPOT_LOWER);
         }
     }
@@ -457,14 +453,15 @@ void MarinePush::TryBuildBarrackTechLab() {
     // sc2::Units barracks_tech = observation->GetUnits(Unit::Self, IsUnit(UNIT_TYPEID::TERRAN_BARRACKSTECHLAB));
 
     sc2::Units barracks = observation->GetUnits(sc2::Unit::Self, sc2::IsUnit(sc2::UNIT_TYPEID::TERRAN_BARRACKS));
-    for (const auto& barrack : barracks) {
-        if(IfUpgradeBarrack() && CountUnitType(sc2::UNIT_TYPEID::TERRAN_BARRACKS) > 1 && CountUnitType(sc2::UNIT_TYPEID::TERRAN_BARRACKSTECHLAB) < 3) {
+    for (const auto &barrack : barracks) {
+        if (IfUpgradeBarrack() && CountUnitType(sc2::UNIT_TYPEID::TERRAN_BARRACKS) > 1
+            && CountUnitType(sc2::UNIT_TYPEID::TERRAN_BARRACKSTECHLAB) < 3) {
             float rx = sc2::GetRandomScalar();
             float ry = sc2::GetRandomScalar();
             Actions()->UnitCommand(barrack, sc2::ABILITY_ID::BUILD_TECHLAB_BARRACKS,
                                    sc2::Point2D(barrack->pos.x + rx * 15.0f,
                                                 barrack->pos.y + ry * 15.0f));
-        } 
+        }
     }
 }
 
@@ -474,22 +471,22 @@ void MarinePush::TryUpgradeToOrbitalCommand() {
     if (CountUnitType(sc2::UNIT_TYPEID::TERRAN_BARRACKS) > 1) {
         sc2::Units bases = observation->GetUnits(sc2::Unit::Self, sc2::IsTownHall());
 
-        for (const auto& base : bases) {
+        for (const auto &base : bases) {
             if (base->unit_type == sc2::UNIT_TYPEID::TERRAN_COMMANDCENTER && observation->GetMinerals() > 150) {
 
                 Actions()->UnitCommand(base, sc2::ABILITY_ID::MORPH_ORBITALCOMMAND);
             }
-            
+
         }
     }
 
 }
 
 bool MarinePush::TryExpand(sc2::AbilityID build_ability, sc2::UNIT_TYPEID unit_type) {
-    const sc2::ObservationInterface* observation = Observation();
+    const sc2::ObservationInterface *observation = Observation();
     float minimum_distance = std::numeric_limits<float>::max();
     sc2::Point3D closest_expansion;
-    for (const auto& expansion : expansions_) {
+    for (const auto &expansion : expansions_) {
         float current_distance = Distance2D(startLocation_, expansion);
         if (current_distance < .01f) {
             continue;
@@ -518,21 +515,21 @@ bool MarinePush::TryExpand(sc2::AbilityID build_ability, sc2::UNIT_TYPEID unit_t
             unit_to_build = unit;
         }
     }
-    
+
     // Check to see if unit can build there
     if (Query()->Placement(build_ability, closest_expansion)) {
         Actions()->UnitCommand(unit_to_build, build_ability, closest_expansion);
         return true;
     }
-    
+
     return false;
 
 }
 
 bool MarinePush::TryBuildExpansionCommandCenter() {
-    const sc2::ObservationInterface* observation = Observation();
+    const sc2::ObservationInterface *observation = Observation();
     sc2::Units bases = observation->GetUnits(sc2::Unit::Alliance::Self, sc2::IsTownHall());
-    
+
     if (bases.size() > 1) {
         return false;
     }
@@ -542,10 +539,25 @@ bool MarinePush::TryBuildExpansionCommandCenter() {
     return TryExpand(sc2::ABILITY_ID::BUILD_COMMANDCENTER, sc2::UNIT_TYPEID::TERRAN_SCV);
 }
 bool MarinePush::checkAttackCondition(ArmyType type) {
-    if(enemyLocations.empty()) return false;
+    if (enemyLocations.empty()) return false;
 
-    if(type == solider && if_soldier_rush) return true;
-    if(type == vehicle && if_vehicle_rush) return true;
+    if (type == solider && if_soldier_rush) return true;
+    if (type == vehicle && if_vehicle_rush) return true;
 
     return false;
+}
+sc2::Point2D MarinePush::FindNearestEnemyLocation(const sc2::Point2D &start) {
+    const sc2::GameInfo &game_info = Observation()->GetGameInfo();
+
+
+    float distance = std::numeric_limits<float>::max();
+    sc2::Point2D target = game_info.enemy_start_locations[0];
+    for (const auto u : game_info.enemy_start_locations) {
+            float d = DistanceSquared2D(u, start);
+            if (d < distance) {
+                distance = d;
+                target = u;
+            }
+    }
+    return target;
 }

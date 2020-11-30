@@ -41,8 +41,8 @@ void MarinePush::onArmoryIdle(const sc2::Unit* unit) {
 
 /** non-building units **/
 void MarinePush::onSCVIdle(const sc2::Unit *unit) {
-    // Task1: Find enemy place
-    if( CountUnitType(sc2::UNIT_TYPEID::TERRAN_SCV) > 16 && enemyFinder == nullptr){
+    // Task1: Find enemy's place
+    if( enemyFinder == nullptr ){
         enemyFinder = unit;
         FindEnemyPlace(unit);
         return;
