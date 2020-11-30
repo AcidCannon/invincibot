@@ -96,7 +96,7 @@ We follow slightly modified [Google C++ Style Guide](https://google.github.io/st
 ## License
 MIT License
 
-Copyright (c) 2020 Qian Yu
+Copyright (c) 2020 Qian Yu, Zijian Xi, Zihao Huang
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

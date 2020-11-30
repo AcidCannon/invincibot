@@ -65,10 +65,12 @@ void MarinePush::OnUnitIdle(const sc2::Unit *unit) {
             if (IfTrainReaper()) {
                 Actions()->UnitCommand(unit, sc2::ABILITY_ID::TRAIN_REAPER);
             } else if (IfUpgradeBarrack()) {
-                // TODO: BUILD TECH LAB
                 // Actions()->UnitCommand(unit, sc2::ABILITY_ID::BUILD_REACTOR);
                 // Build Marauder
                 Actions()->UnitCommand(unit, sc2::ABILITY_ID::TRAIN_MARAUDER);
+            }
+            else {
+                Actions()->UnitCommand(unit, sc2::ABILITY_ID::TRAIN_MARINE);
             }
             break;
         }
@@ -95,6 +97,7 @@ void MarinePush::OnUnitIdle(const sc2::Unit *unit) {
                 const sc2::GameInfo &game_info = Observation()->GetGameInfo();
                 Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK,
                                        game_info.enemy_start_locations.front());
+                if_soldier_rush = false;
             } else {
                 Actions()->UnitCommand(unit, sc2::ABILITY_ID::SMART,
                                        GatheringPoint);
@@ -155,7 +158,6 @@ void MarinePush::OnUnitIdle(const sc2::Unit *unit) {
         }
     }
 }
-
 
 bool MarinePush::FindEnemyMainStructure(const sc2::ObservationInterface* observation, const sc2::Unit*& enemy_unit) {
     sc2::Units enemy_units = observation->GetUnits(sc2::Unit::Alliance::Enemy);
