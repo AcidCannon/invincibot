@@ -17,7 +17,6 @@ void MarinePush::OnGameStart() {
     // get start location and expansions
     startLocation_ = Observation()->GetStartLocation();
     expansions_ = sc2::search::CalculateExpansionLocations(Observation(), Query());
-
 }
 
 void MarinePush::OnStep() {
@@ -25,9 +24,9 @@ void MarinePush::OnStep() {
     CountUnitNumber();
     TryBuildSupplyDepot();
     TryBuildBarracks();
-    TryBuildRefinery();
-    CollectVespene();
-    TryBuildBarrackTechLab();
+    // TryBuildRefinery();
+    // CollectVespene();
+    ///TryBuildBarrackTechLab();
     // TryBuildFactory();
     // TryBuildEngineeringBay();
     // TryBuildArmory();
@@ -300,7 +299,7 @@ bool MarinePush::TryBuildBarracks() {
         return false;
     }
 
-    if (CountUnitType(sc2::UNIT_TYPEID::TERRAN_BARRACKS) > 3) {
+    if (CountUnitType(sc2::UNIT_TYPEID::TERRAN_BARRACKS) > 7) {
         return false;
     }
 
