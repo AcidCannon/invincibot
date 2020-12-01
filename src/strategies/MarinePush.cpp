@@ -316,7 +316,7 @@ bool MarinePush::TryBuildBarracks() {
         return false;
     }
 
-    if (CountUnitType(sc2::UNIT_TYPEID::TERRAN_BARRACKS) > 3) {
+    if (CountUnitType(sc2::UNIT_TYPEID::TERRAN_BARRACKS) > 7) {
         return false;
     }
 

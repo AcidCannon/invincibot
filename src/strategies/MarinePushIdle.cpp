@@ -53,11 +53,11 @@ void MarinePush::onSCVIdle(const sc2::Unit *unit) {
 void MarinePush::onMarineIdle(const sc2::Unit *unit) {
     if (checkAttackCondition(ArmyType::solider)) {
         //priori to attack main structure
-        const sc2::Unit* enemy_unit = nullptr;
-        if (FindEnemyMainStructure(Observation(), enemy_unit)) {
-            Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK, enemy_unit);
-            return;
-        }
+        // const sc2::Unit* enemy_unit = nullptr;
+        // if (FindEnemyMainStructure(Observation(), enemy_unit)) {
+        //     Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK, enemy_unit);
+        //     return;
+        // }
         const sc2::GameInfo &game_info = Observation()->GetGameInfo();
         Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK,
                                enemyLocations[0]);

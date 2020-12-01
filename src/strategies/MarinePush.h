@@ -17,6 +17,7 @@ enum ArmyType{
 class MarinePush : public sc2::Agent {
    public:
     void OnGameStart() final;
+    void OnGameEnd() final;
     void OnStep() final;
     void OnUnitIdle(const sc2::Unit* unit) final;
 
