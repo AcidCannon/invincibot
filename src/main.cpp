@@ -5,7 +5,7 @@
 #include "strategies/BracketPush.h"
 #include "strategies/MarinePush.h"
 
-#include "core/Converter.h"
+#include "tools/Converter.h"
 
 #include <sc2api/sc2_coordinator.h>
 #include <sc2api/sc2_gametypes.h>

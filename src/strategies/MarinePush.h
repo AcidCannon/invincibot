@@ -1,13 +1,10 @@
-
 // The MIT License (MIT)
 //
 // Copyright (c) 2020 Qian Yu
 
 #pragma once
 #include <sc2api/sc2_api.h>
-
 #include "common/Builder.h"
-
 
 enum ArmyType{
     solider,
@@ -16,10 +13,16 @@ enum ArmyType{
 
 class MarinePush : public sc2::Agent {
    public:
+    /** Click Events **/
     void OnGameStart() final;
-    void OnGameEnd() final;
     void OnStep() final;
+    void OnUnitCreated(const sc2::Unit* unit) final;
+    void OnUnitDestroyed(const sc2::Unit* unit) final;
     void OnUnitIdle(const sc2::Unit* unit) final;
+    void OnUnitEnterVision(const sc2::Unit* unit) final;
+    void OnBuildingConstructionComplete(const sc2::Unit* unit) final;
+    void OnUpgradeCompleted(sc2::UpgradeID) final;
+    void OnGameEnd() final;
 
    private:
     size_t CountUnitType(sc2::UNIT_TYPEID unit_type);
@@ -41,7 +44,7 @@ class MarinePush : public sc2::Agent {
 
     bool TryBuildEngineeringBay();
     bool TryBuildArmory();
-    bool IfUpgradeBarrack();
+    bool IfUpgradeBarrack() const;
     void FindEnemyPlace(const sc2::Unit* unit);
 
 
@@ -68,6 +71,7 @@ class MarinePush : public sc2::Agent {
     const sc2::Unit* FindNearestMineralPatch(const sc2::Point2D& start);
     const sc2::Unit* FindNearestVespeneGeyser(const sc2::Point2D& start);
     sc2::Point2D FindNearestEnemyLocation(const sc2::Point2D& start);
+    void AssignAttackCommands(const sc2::Unit* unit);
 
 
     /** onUnitIdle **/

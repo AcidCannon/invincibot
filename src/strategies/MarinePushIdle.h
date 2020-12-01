@@ -1,3 +1,7 @@
+// The MIT License (MIT)
+//
+// Copyright (c) 2020 Qian Yu
+
 #pragma once
 #include <sc2api/sc2_api.h>
 void onCommandCenterIdle(const sc2::Unit* unit);

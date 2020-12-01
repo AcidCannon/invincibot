@@ -1,3 +1,7 @@
+// The MIT License (MIT)
+//
+// Copyright (c) 2020 Qian Yu
+
 #include "MarinePush.h"
 
 /** building **/
@@ -58,9 +62,7 @@ void MarinePush::onMarineIdle(const sc2::Unit *unit) {
         //     Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK, enemy_unit);
         //     return;
         // }
-        const sc2::GameInfo &game_info = Observation()->GetGameInfo();
-        Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK,
-                               enemyLocations[0]);
+        AssignAttackCommands(unit);
         if_soldier_rush = false;
     } else {
         Actions()->UnitCommand(unit, sc2::ABILITY_ID::SMART,
@@ -70,9 +72,7 @@ void MarinePush::onMarineIdle(const sc2::Unit *unit) {
 
 void MarinePush::onMarauderIdle(const sc2::Unit *unit) {
     if (checkAttackCondition(ArmyType::solider)) {
-        const sc2::GameInfo &game_info = Observation()->GetGameInfo();
-        Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK,
-                               enemyLocations[0]);
+        AssignAttackCommands(unit);
         if_soldier_rush = false;
     } else {
         Actions()->UnitCommand(unit, sc2::ABILITY_ID::SMART,
@@ -82,9 +82,7 @@ void MarinePush::onMarauderIdle(const sc2::Unit *unit) {
 
 void MarinePush::onReaperIdle(const sc2::Unit *unit) {
     if (checkAttackCondition(ArmyType::solider)) {
-        const sc2::GameInfo &game_info = Observation()->GetGameInfo();
-        Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK,
-                               enemyLocations[0]);
+        AssignAttackCommands(unit);
     } else {
         Actions()->UnitCommand(unit, sc2::ABILITY_ID::SMART,
                                GatheringPoint);
@@ -98,15 +96,7 @@ void MarinePush::onWidowmineIdle(const sc2::Unit* unit) {
 void MarinePush::onHellionIdle(const sc2::Unit* unit) {
     if (checkAttackCondition(ArmyType::vehicle)) {
         if_vehicle_rush = false;
-        //priori to attack main structure
-        const sc2::Unit* enemy_unit = nullptr;
-        if (FindEnemyMainStructure(Observation(), enemy_unit)) {
-            Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK, enemy_unit);
-            return;
-        }
-        const sc2::GameInfo &game_info = Observation()->GetGameInfo();
-        Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK,
-                               enemyLocations[0]);
+        AssignAttackCommands(unit);
     } else {
         Actions()->UnitCommand(unit, sc2::ABILITY_ID::SMART,
                                GatheringPoint);
