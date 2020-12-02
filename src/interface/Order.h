@@ -5,11 +5,6 @@
 
 struct Order {
 
-    /**
-     *
-     * @param data_
-     * @param assignee_
-     */
     explicit Order(const sc2::UnitTypeData& data_,
                    const sc2::Unit* assignee_ = nullptr)
         : name(data_.name),
