@@ -6,14 +6,47 @@
 
 #include <sc2api/sc2_api.h>
 #include <sc2api/sc2_unit_filters.h>
+// #include <vector>
+// #include "tools/LocationManager.h"
+
+// void MarinePush::OnGameStart() {
+//     // ClientEvents::OnGameStart();
+//     Actions()->SendChat("Break a leg :)");
+
+//     // get start location and expansions
+//     startLocation_ = Observation()->GetStartLocation();
+//     expansions_ = sc2::search::CalculateExpansionLocations(Observation(), Query());
+// }
+
+// void MarinePush::OnStep() {
+//     // ClientEvents::OnStep();
+//     CountUnitNumber();
+//     TryBuildSupplyDepot();
+//     TryBuildBarracks();
+//     // TryBuildRefinery();
+//     // CollectVespene();
+//     ///TryBuildBarrackTechLab();
+//     // TryBuildFactory();
+//     // TryBuildEngineeringBay();
+//     // TryBuildArmory();
+//     TryAttack();
+//     TryLowerSupplyDepot();
+//     // TryUpgradeToOrbitalCommand();
+//     // TryBuildExpansionCommandCenter();
+//     if (enemyLocations.empty() && enemyFinder != nullptr && !enemyFinder->is_alive) {
+//         enemyLocations.push_back(FindNearestEnemyLocation(sc2::Point2D(enemyFinder->pos.x, enemyFinder->pos.y)));
+//         std::cout << enemyFinder->pos.x << " " << enemyFinder->pos.y << std::endl;
+//     }
+// }
 #include <sc2lib/sc2_lib.h>
 
 #include <iostream>
 #include <vector>
+#include "tools/LocationManager.h"
+//#include <cmath>
 
-
-float max(float a, float b, float c){
-    return MAX(MAX(a,b), MAX(a,c));
+float max3(float a, float b, float c){
+    return std::max(std::max(a,b), std::max(a,c));
 }
 
 void MarinePush::FindEnemyPlace(const sc2::Unit *unit) {
@@ -24,21 +57,21 @@ void MarinePush::FindEnemyPlace(const sc2::Unit *unit) {
     float d1 = sc2::DistanceSquared2D(game_info.enemy_start_locations[1], unit->pos);
     float d2 = sc2::DistanceSquared2D(game_info.enemy_start_locations[2], unit->pos);
 
-    if(d0 == max(d1,d2,d0)){
+    if(d0 == max3(d1,d2,d0)){
         Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations[1],
                                true);
         Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations[0],
                                true);
         Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations[2],
                                true);
-    } else if(d1 == max(d1,d2,d0)){
+    } else if(d1 == max3(d1,d2,d0)){
         Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations[0],
                                true);
         Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations[1],
                                true);
         Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations[2],
                                true);
-    } else if(d2 == max(d1,d2,d0)){
+    } else if(d2 == max3(d1,d2,d0)){
         Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations[0],
                                true);
         Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations[2],
@@ -128,6 +161,29 @@ bool MarinePush::TryBuildStructureConcurrent(
                            sc2::Point2D(unit_to_build->pos.x + rx * 15.0f,
                                         unit_to_build->pos.y + ry * 15.0f));
 
+    return true;
+}
+
+bool MarinePush::TryBuildStructureAt(sc2::ABILITY_ID ability_type_for_structure,
+                                     sc2::Point2D where_to_build,
+                                     sc2::UNIT_TYPEID unit_type) {
+    const sc2::ObservationInterface *observation = Observation();
+
+    const sc2::Unit *unit_to_build = nullptr;
+    sc2::Units units = observation->GetUnits(sc2::Unit::Alliance::Self);
+    for (const auto &unit : units) {
+        for (const auto &order : unit->orders) {
+            if (order.ability_id == ability_type_for_structure) {
+                break;
+            }
+        }
+
+        if (unit->unit_type == unit_type) {
+            unit_to_build = unit;
+        }
+    }
+
+    Actions()->UnitCommand(unit_to_build, ability_type_for_structure, where_to_build);
     return true;
 }
 
@@ -261,7 +317,20 @@ bool MarinePush::TryBuildBarracks() {
         return false;
     }
 
-    return TryBuildStructureConcurrent(sc2::ABILITY_ID::BUILD_BARRACKS);
+    if (barrack_locations.empty()) {
+        return false;
+    }
+
+    for (const auto &loc : barrack_locations) {
+        // if can be placed
+        // std::cout << loc.pos.x << " " << loc.pos.y << std::endl;
+        if (Query()->Placement(sc2::ABILITY_ID::BUILD_BARRACKS, loc.pos)) {
+            // std::cout << "Can be placed" << std::endl;
+            return TryBuildStructureAt(sc2::ABILITY_ID::BUILD_BARRACKS, loc.pos);
+        }
+    }
+
+    return false;
 }
 
 bool MarinePush::TryBuildRefinery() {
