@@ -14,14 +14,14 @@ enum BaseState {
   empty,
 };
 
-struct LocationState{
+struct LocationState {
   BaseState baseState;
   sc2::Point2D location;
 };
 
-struct Finder{
-  Finder(const Unit* unit_) : unit(unit_) {}
-  const Unit* unit;
+struct Finder {
+  Finder(const Unit *unit_) : unit(unit_) {}
+  const Unit *unit;
   std::vector<LocationState> toSearch;
 };
 

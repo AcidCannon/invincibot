@@ -4,12 +4,10 @@
 
 #pragma once
 #include <sc2api/sc2_api.h>
+
 #include "common/Builder.h"
 
-enum ArmyType{
-    solider,
-    vehicle
-};
+enum ArmyType { solider, vehicle };
 
 class MarinePush : public sc2::Agent {
    public:
@@ -34,8 +32,6 @@ class MarinePush : public sc2::Agent {
         sc2::ABILITY_ID ability_type_for_structure,
         sc2::UNIT_TYPEID unit_type = sc2::UNIT_TYPEID::TERRAN_SCV);
 
-
-
     void CollectVespene();
     std::vector<sc2::Unit> FindUnderMiningRefinery();
     std::vector<sc2::Unit> FindMiningScvs();
@@ -47,13 +43,11 @@ class MarinePush : public sc2::Agent {
     bool IfUpgradeBarrack() const;
     void FindEnemyPlace(const sc2::Unit* unit);
 
-
     // From HZH
 
     void TryLowerSupplyDepot();
     void TryUpgradeToOrbitalCommand();
     bool TryExpand(sc2::AbilityID build_ability, sc2::UNIT_TYPEID unit_type);
-
 
     /** Building Related Functions **/
     bool TryBuildSupplyDepot();
@@ -67,12 +61,13 @@ class MarinePush : public sc2::Agent {
     /** Helper Functions **/
     bool checkAttackCondition(ArmyType type);
     void CountUnitNumber();
-    static bool FindEnemyMainStructure(const sc2::ObservationInterface* observation, const sc2::Unit*& enemy_unit);
+    static bool FindEnemyMainStructure(
+        const sc2::ObservationInterface* observation,
+        const sc2::Unit*& enemy_unit);
     const sc2::Unit* FindNearestMineralPatch(const sc2::Point2D& start);
     const sc2::Unit* FindNearestVespeneGeyser(const sc2::Point2D& start);
     sc2::Point2D FindNearestEnemyLocation(const sc2::Point2D& start);
     void AssignAttackCommands(const sc2::Unit* unit);
-
 
     /** onUnitIdle **/
     #include "MarinePushIdle.h"
@@ -94,4 +89,5 @@ class MarinePush : public sc2::Agent {
     bool if_vehicle_rush = false;
     bool if_soldier_rush = false;
 
+    bool if_arrive = false;
 };

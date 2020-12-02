@@ -3,21 +3,54 @@
 // Copyright (c) 2020 Qian Yu, Zijian Xi, Zihao Huang
 
 #include "MarinePush.h"
-#include <iostream>
+
 #include <sc2api/sc2_api.h>
-#include <sc2lib/sc2_lib.h>
 #include <sc2api/sc2_unit_filters.h>
+#include <sc2lib/sc2_lib.h>
+
+#include <iostream>
 #include <vector>
+
+
+float max(float a, float b, float c){
+    return MAX(MAX(a,b), MAX(a,c));
+}
 
 void MarinePush::FindEnemyPlace(const sc2::Unit *unit) {
     const sc2::GameInfo &game_info = Observation()->GetGameInfo();
-    for (auto dest : game_info.enemy_start_locations) {
-        Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK,
-                               dest, true);
+    if(game_info.enemy_start_locations.size() != 3) return;
+
+    float d0 = sc2::DistanceSquared2D(game_info.enemy_start_locations[0], unit->pos);
+    float d1 = sc2::DistanceSquared2D(game_info.enemy_start_locations[1], unit->pos);
+    float d2 = sc2::DistanceSquared2D(game_info.enemy_start_locations[2], unit->pos);
+
+    if(d0 == max(d1,d2,d0)){
+        Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations[1],
+                               true);
+        Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations[0],
+                               true);
+        Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations[2],
+                               true);
+    } else if(d1 == max(d1,d2,d0)){
+        Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations[0],
+                               true);
+        Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations[1],
+                               true);
+        Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations[2],
+                               true);
+    } else if(d2 == max(d1,d2,d0)){
+        Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations[0],
+                               true);
+        Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations[2],
+                               true);
+        Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations[1],
+                               true);
     }
 }
 
-bool MarinePush::FindEnemyMainStructure(const sc2::ObservationInterface *observation, const sc2::Unit *&enemy_unit) {
+bool MarinePush::FindEnemyMainStructure(
+    const sc2::ObservationInterface *observation,
+    const sc2::Unit *&enemy_unit) {
     sc2::Units enemy_units = observation->GetUnits(sc2::Unit::Alliance::Enemy);
     for (const auto unit : enemy_units) {
         if (unit->unit_type == sc2::UNIT_TYPEID::TERRAN_COMMANDCENTER ||
@@ -31,7 +64,6 @@ bool MarinePush::FindEnemyMainStructure(const sc2::ObservationInterface *observa
 }
 
 bool MarinePush::IfUpgradeBarrack() const {
-
     if (num_of_terran_scv < 20) {
         return false;
     }
@@ -65,8 +97,8 @@ void MarinePush::TryAttack() {
     }
 }
 
-bool MarinePush::TryBuildStructureConcurrent(sc2::ABILITY_ID ability_type_for_structure,
-                                             sc2::UNIT_TYPEID unit_type) {
+bool MarinePush::TryBuildStructureConcurrent(
+    sc2::ABILITY_ID ability_type_for_structure, sc2::UNIT_TYPEID unit_type) {
     const sc2::ObservationInterface *observation = Observation();
 
     // Get an scv to build the structure.
@@ -143,7 +175,8 @@ bool MarinePush::TryBuildSupplyDepot() {
     return TryBuildStructure(sc2::ABILITY_ID::BUILD_SUPPLYDEPOT);
 }
 
-const sc2::Unit *MarinePush::FindNearestMineralPatch(const sc2::Point2D &start) {
+const sc2::Unit *MarinePush::FindNearestMineralPatch(
+    const sc2::Point2D &start) {
     sc2::Units units = Observation()->GetUnits(sc2::Unit::Alliance::Neutral);
     float distance = std::numeric_limits<float>::max();
     const sc2::Unit *target = nullptr;
@@ -170,7 +203,8 @@ bool IsVespeneGeyser(const sc2::Unit *unit) {
     return false;
 }
 
-const sc2::Unit *MarinePush::FindNearestVespeneGeyser(const sc2::Point2D &start) {
+const sc2::Unit *MarinePush::FindNearestVespeneGeyser(
+    const sc2::Point2D &start) {
     // Similar to FindNearestMineralPatch.
     sc2::Units units = Observation()->GetUnits(sc2::Unit::Alliance::Neutral);
     float distance = std::numeric_limits<float>::max();
@@ -204,12 +238,16 @@ bool MarinePush::TryBuildRefineryNearby() {
         }
     }
     // find vespene geyser near by command centre
-    const sc2::Unit *vespene_target = FindNearestVespeneGeyser(CommandCentrePoint);
+    const sc2::Unit *vespene_target =
+        FindNearestVespeneGeyser(CommandCentrePoint);
     if (!vespene_target) {
         return false;
     }
-    // std::cout << "Vespene Geyser coord: " << vespene_target->pos.x << " " <<vespene_target->pos.y << " " << vespene_target->vespene_contents << std::endl;
-    Actions()->UnitCommand(unit_to_build, sc2::ABILITY_ID::BUILD_REFINERY, vespene_target);
+    // std::cout << "Vespene Geyser coord: " << vespene_target->pos.x << " "
+    // <<vespene_target->pos.y << " " << vespene_target->vespene_contents <<
+    // std::endl;
+    Actions()->UnitCommand(unit_to_build, sc2::ABILITY_ID::BUILD_REFINERY,
+                           vespene_target);
 
     return true;
 }
@@ -278,8 +316,7 @@ std::vector<sc2::Unit> MarinePush::FindUnderMiningRefinery() {
     // Find all refineries that no more than 5 scvs working on it.
     for (const auto &unit : units) {
         if (unit->unit_type == sc2::UNIT_TYPEID::TERRAN_REFINERY &&
-            unit->build_progress >= 1.0f &&
-            unit->vespene_contents > 0 &&
+            unit->build_progress >= 1.0f && unit->vespene_contents > 0 &&
             unit->assigned_harvesters < unit->ideal_harvesters) {
             refineries.push_back(*unit);
         }
@@ -317,12 +354,13 @@ void MarinePush::CollectVespene() {
         return;
     }
 
-    for (const auto &refinery: refineries) {
+    for (const auto &refinery : refineries) {
         // std::cout << refinery.vespene_contents << std::endl;
         // Assign more SCVs to collect vespene.
         while (refinery.assigned_harvesters < refinery.ideal_harvesters &&
-            !mining_scvs.empty()) {
-            Actions()->UnitCommand(&mining_scvs.back(), sc2::ABILITY_ID::HARVEST_GATHER, &refinery);
+               !mining_scvs.empty()) {
+            Actions()->UnitCommand(&mining_scvs.back(),
+                                   sc2::ABILITY_ID::HARVEST_GATHER, &refinery);
             return;
         }
     }
@@ -357,39 +395,38 @@ void MarinePush::TryLowerSupplyDepot() {
     const sc2::ObservationInterface *observation = Observation();
 
     if (CountUnitType(sc2::UNIT_TYPEID::TERRAN_SUPPLYDEPOT) > 0) {
-        sc2::Units
-            supply_depots = observation->GetUnits(sc2::Unit::Self, sc2::IsUnit(sc2::UNIT_TYPEID::TERRAN_SUPPLYDEPOT));
+        sc2::Units supply_depots = observation->GetUnits(
+            sc2::Unit::Self, sc2::IsUnit(sc2::UNIT_TYPEID::TERRAN_SUPPLYDEPOT));
 
         for (const auto &supply_depot : supply_depots) {
-            Actions()->UnitCommand(supply_depot, sc2::ABILITY_ID::MORPH_SUPPLYDEPOT_LOWER);
+            Actions()->UnitCommand(supply_depot,
+                                   sc2::ABILITY_ID::MORPH_SUPPLYDEPOT_LOWER);
         }
     }
-
 }
-
-
 
 void MarinePush::TryUpgradeToOrbitalCommand() {
     const sc2::ObservationInterface *observation = Observation();
 
     if (CountUnitType(sc2::UNIT_TYPEID::TERRAN_BARRACKS) > 1) {
-        sc2::Units bases = observation->GetUnits(sc2::Unit::Self, sc2::IsTownHall());
+        sc2::Units bases =
+            observation->GetUnits(sc2::Unit::Self, sc2::IsTownHall());
 
         for (const auto &base : bases) {
-            if (base->unit_type == sc2::UNIT_TYPEID::TERRAN_COMMANDCENTER && observation->GetMinerals() > 150) {
-
-                Actions()->UnitCommand(base, sc2::ABILITY_ID::MORPH_ORBITALCOMMAND);
+            if (base->unit_type == sc2::UNIT_TYPEID::TERRAN_COMMANDCENTER &&
+                observation->GetMinerals() > 150) {
+                Actions()->UnitCommand(base,
+                                       sc2::ABILITY_ID::MORPH_ORBITALCOMMAND);
             }
-
         }
     }
-
 }
 
 /** Building related functions **/
 bool MarinePush::TryBuildExpansionCommandCenter() {
     const sc2::ObservationInterface *observation = Observation();
-    sc2::Units bases = observation->GetUnits(sc2::Unit::Alliance::Self, sc2::IsTownHall());
+    sc2::Units bases =
+        observation->GetUnits(sc2::Unit::Alliance::Self, sc2::IsTownHall());
 
     if (bases.size() > 1) {
         return false;
@@ -397,20 +434,25 @@ bool MarinePush::TryBuildExpansionCommandCenter() {
     if (bases.empty()) {
         return false;
     }
-    return TryExpand(sc2::ABILITY_ID::BUILD_COMMANDCENTER, sc2::UNIT_TYPEID::TERRAN_SCV);
+    return TryExpand(sc2::ABILITY_ID::BUILD_COMMANDCENTER,
+                     sc2::UNIT_TYPEID::TERRAN_SCV);
 }
 
 void MarinePush::TryBuildBarrackTechLab() {
     const sc2::ObservationInterface *observation = Observation();
-    // sc2::Units barracks_tech = observation->GetUnits(Unit::Self, IsUnit(UNIT_TYPEID::TERRAN_BARRACKSTECHLAB));
+    // sc2::Units barracks_tech = observation->GetUnits(Unit::Self,
+    // IsUnit(UNIT_TYPEID::TERRAN_BARRACKSTECHLAB));
 
-    sc2::Units barracks = observation->GetUnits(sc2::Unit::Self, sc2::IsUnit(sc2::UNIT_TYPEID::TERRAN_BARRACKS));
+    sc2::Units barracks = observation->GetUnits(
+        sc2::Unit::Self, sc2::IsUnit(sc2::UNIT_TYPEID::TERRAN_BARRACKS));
     for (const auto &barrack : barracks) {
-        if (IfUpgradeBarrack() && CountUnitType(sc2::UNIT_TYPEID::TERRAN_BARRACKS) > 1
-            && CountUnitType(sc2::UNIT_TYPEID::TERRAN_BARRACKSTECHLAB) < 3) {
+        if (IfUpgradeBarrack() &&
+            CountUnitType(sc2::UNIT_TYPEID::TERRAN_BARRACKS) > 1 &&
+            CountUnitType(sc2::UNIT_TYPEID::TERRAN_BARRACKSTECHLAB) < 3) {
             float rx = sc2::GetRandomScalar();
             float ry = sc2::GetRandomScalar();
-            Actions()->UnitCommand(barrack, sc2::ABILITY_ID::BUILD_TECHLAB_BARRACKS,
+            Actions()->UnitCommand(barrack,
+                                   sc2::ABILITY_ID::BUILD_TECHLAB_BARRACKS,
                                    sc2::Point2D(barrack->pos.x + rx * 15.0f,
                                                 barrack->pos.y + ry * 15.0f));
         }
@@ -443,7 +485,8 @@ bool MarinePush::checkAttackCondition(ArmyType type) {
     return false;
 }
 
-bool MarinePush::TryExpand(sc2::AbilityID build_ability, sc2::UNIT_TYPEID unit_type) {
+bool MarinePush::TryExpand(sc2::AbilityID build_ability,
+                           sc2::UNIT_TYPEID unit_type) {
     const sc2::ObservationInterface *observation = Observation();
     float minimum_distance = std::numeric_limits<float>::max();
     sc2::Point3D closest_expansion;
@@ -487,21 +530,46 @@ bool MarinePush::TryExpand(sc2::AbilityID build_ability, sc2::UNIT_TYPEID unit_t
 }
 
 void MarinePush::AssignAttackCommands(const sc2::Unit *unit) {
-
     const sc2::ObservationInterface *observation = Observation();
     sc2::Units enemy_units = observation->GetUnits(sc2::Unit::Alliance::Enemy);
-    for (const auto enemy_unit : enemy_units){
-        auto attributes = observation->GetUnitTypeData().at(enemy_unit->unit_type);
+
+    const sc2::GameInfo &game_info = Observation()->GetGameInfo();
+
+    if (!if_arrive && game_info.enemy_start_locations.size() == 1) {
+        Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK,
+                               game_info.enemy_start_locations.front());
+        if_arrive = true;
+        return;
+    }
+
+    int count = 0;
+    for (const auto enemy_unit : enemy_units) {
+        auto attributes =
+            observation->GetUnitTypeData().at(enemy_unit->unit_type);
 
         // ignore non-building units
-        if(!enemy_unit->is_alive || attributes.movement_speed != 0) continue;
+        if (!enemy_unit->is_alive || attributes.movement_speed != 0) continue;
 
-        const sc2::Point2D next_detection_location(enemy_unit->pos.x, enemy_unit->pos.y);
+        const sc2::Point2D next_detection_location(enemy_unit->pos.x,
+                                                   enemy_unit->pos.y);
         Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK,
                                next_detection_location, true);
+        count++;
+    }
+
+    if (count != 0) return;
+
+    // no building units
+    if (!enemyLocations.empty()) {
+        Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK,
+                               enemyLocations.front());
+    } else {
+        for (auto i : game_info.enemy_start_locations) {
+            Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK, i,
+                                   true);
+        }
     }
 }
-
 
 /** Click Events **/
 /** Click Events **/
@@ -512,7 +580,10 @@ void MarinePush::OnGameStart() {
 
     // get start location and expansions
     startLocation_ = Observation()->GetStartLocation();
-    expansions_ = sc2::search::CalculateExpansionLocations(Observation(), Query());
+    expansions_ =
+        sc2::search::CalculateExpansionLocations(Observation(), Query());
+
+    const sc2::GameInfo &game_info = Observation()->GetGameInfo();
 
     if (enemyFinder == nullptr) {
         const sc2::ObservationInterface *observation = Observation();
@@ -524,7 +595,7 @@ void MarinePush::OnGameStart() {
         }
     }
     FindEnemyPlace(enemyFinder);
-
+    std::cout << game_info.start_locations.front().x << std::endl;
 }
 
 void MarinePush::OnStep() {
@@ -543,18 +614,17 @@ void MarinePush::OnStep() {
     // TryUpgradeToOrbitalCommand();
     // TryBuildExpansionCommandCenter();
 
-    if (enemyLocations.empty() && enemyFinder != nullptr && !enemyFinder->is_alive) {
-
-        /** TODO: if distance of the died finder and any enemy location is too far, we send another one.   **/
-        enemyLocations.push_back(FindNearestEnemyLocation(sc2::Point2D(enemyFinder->pos.x, enemyFinder->pos.y)));
-        std::cout << enemyFinder->pos.x << " " << enemyFinder->pos.y << std::endl;
-        const sc2::ObservationInterface *observation = Observation();
-        sc2::Units enemy_units = observation->GetUnits(sc2::Unit::Alliance::Enemy);
-        for (const auto enemy_unit : enemy_units){
-            auto attributes = observation->GetUnitTypeData().at(enemy_unit->unit_type);
-            std::cout << attributes.name << std::endl;
-        }
-    }
+    //    const sc2::ObservationInterface *observation = Observation();
+    //    sc2::Units enemy_units =
+    //    observation->GetUnits(sc2::Unit::Alliance::Enemy); int count = 0; for
+    //    (const auto enemy_unit : enemy_units){
+    //        auto attributes =
+    //        observation->GetUnitTypeData().at(enemy_unit->unit_type);
+    //        if(attributes.movement_speed == 0) count++;
+    //    }
+    //    if(count == 0){
+    //        FindEnemyPlace
+    //    }
 }
 
 void MarinePush::OnUnitIdle(const sc2::Unit *unit) {
@@ -597,7 +667,8 @@ void MarinePush::OnUnitIdle(const sc2::Unit *unit) {
         }
         case sc2::UNIT_TYPEID::TERRAN_ENGINEERINGBAY: {
             onEngineeringBayIdle(unit);
-            //Actions()->UnitCommand(unit, sc2::ABILITY_ID::RESEARCH_TERRANINFANTRYWEAPONS);
+            // Actions()->UnitCommand(unit,
+            // sc2::ABILITY_ID::RESEARCH_TERRANINFANTRYWEAPONS);
             break;
         }
         case sc2::UNIT_TYPEID::TERRAN_ARMORY: {
@@ -611,15 +682,31 @@ void MarinePush::OnUnitIdle(const sc2::Unit *unit) {
 }
 
 void MarinePush::OnUnitCreated(const sc2::Unit *unit) {
-//        ClientEvents::OnUnitCreated(unit);
+    //        ClientEvents::OnUnitCreated(unit);
 }
 
 void MarinePush::OnUnitDestroyed(const sc2::Unit *unit) {
-//        ClientEvents::OnUnitDestroyed(unit);
+    // ClientEvents::OnUnitDestroyed(unit);
+    if (enemyFinder != nullptr && enemyLocations.empty()) {
+        if ( unit->tag == enemyFinder->tag)
+            enemyLocations.push_back(FindNearestEnemyLocation(
+                sc2::Point2D(enemyFinder->pos.x, enemyFinder->pos.y)));
+    }
 }
 
 void MarinePush::OnUnitEnterVision(const sc2::Unit *unit) {
     ClientEvents::OnUnitEnterVision(unit);
+
+    auto attributes = Observation()->GetUnitTypeData().at(unit->unit_type);
+
+    if (enemyLocations.empty() && enemyFinder != nullptr) {
+        if (attributes.movement_speed == 0) {
+            sc2::Point2D p = FindNearestEnemyLocation(
+                sc2::Point2D(enemyFinder->pos.x, enemyFinder->pos.y));
+            enemyLocations.push_back(p);
+            Actions()->UnitCommand(enemyFinder, sc2::ABILITY_ID::ATTACK_ATTACK, CommandCentrePoint);
+        }
+    }
 }
 
 void MarinePush::OnBuildingConstructionComplete(const sc2::Unit *unit) {
@@ -627,20 +714,24 @@ void MarinePush::OnBuildingConstructionComplete(const sc2::Unit *unit) {
 }
 
 void MarinePush::OnUpgradeCompleted(sc2::UpgradeID) {
-//    ClientEvents::OnUpgradeCompleted( < unnamed >);
+    //    ClientEvents::OnUpgradeCompleted( < unnamed >);
 }
 
 void MarinePush::OnGameEnd() {
     std::cout << "Game Over" << std::endl;
     const sc2::ObservationInterface *observation = Observation();
-    sc2::Units enemy_units = observation->GetUnits(sc2::Unit::Alliance::Enemy);
-    size_t enemy_counter = 0;
-    for (const auto unit : enemy_units){
+
+    sc2::Units own_units = observation->GetUnits(sc2::Unit::Alliance::Self);
+    size_t own_units_counter = 0;
+    for (const auto unit : own_units) {
         auto attributes = observation->GetUnitTypeData().at(unit->unit_type);
-        std::cout << attributes.name << " " << attributes.movement_speed << std::endl;
-        if(attributes.movement_speed == 0) enemy_counter++;
+        // std::cout << attributes.name << " " << attributes.movement_speed <<
+        // std::endl;
+        if (attributes.movement_speed == 0) own_units_counter++;
     }
-    if(enemy_counter == 0) std::cout << "We Win" << std::endl;
-    else std::cout << "Enemy Wins" << std::endl;
+    if (own_units_counter != 0)
+        std::cout << "We Win" << std::endl;
+    else
+        std::cout << "Enemy Wins" << std::endl;
     ClientEvents::OnGameEnd();
 }
