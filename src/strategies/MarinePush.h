@@ -6,6 +6,7 @@
 #include <sc2api/sc2_api.h>
 
 #include "common/Builder.h"
+#include "tools/LocationManager.h"
 
 enum ArmyType { solider, vehicle };
 

@@ -42,9 +42,11 @@
 
 #include <iostream>
 #include <vector>
+#include "tools/LocationManager.h"
+//#include <cmath>
 
-float max(float a, float b, float c){
-    return MAX(MAX(a,b), MAX(a,c));
+float max3(float a, float b, float c){
+    return std::max(std::max(a,b), std::max(a,c));
 }
 
 void MarinePush::FindEnemyPlace(const sc2::Unit *unit) {
@@ -55,21 +57,21 @@ void MarinePush::FindEnemyPlace(const sc2::Unit *unit) {
     float d1 = sc2::DistanceSquared2D(game_info.enemy_start_locations[1], unit->pos);
     float d2 = sc2::DistanceSquared2D(game_info.enemy_start_locations[2], unit->pos);
 
-    if(d0 == max(d1,d2,d0)){
+    if(d0 == max3(d1,d2,d0)){
         Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations[1],
                                true);
         Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations[0],
                                true);
         Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations[2],
                                true);
-    } else if(d1 == max(d1,d2,d0)){
+    } else if(d1 == max3(d1,d2,d0)){
         Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations[0],
                                true);
         Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations[1],
                                true);
         Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations[2],
                                true);
-    } else if(d2 == max(d1,d2,d0)){
+    } else if(d2 == max3(d1,d2,d0)){
         Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations[0],
                                true);
         Actions()->UnitCommand(unit, sc2::ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations[2],
