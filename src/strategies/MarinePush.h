@@ -7,7 +7,7 @@
 #include <sc2api/sc2_api.h>
 
 #include "common/Builder.h"
-
+#include "tools/LocationManager.h"
 
 enum ArmyType{
     solider,
@@ -29,8 +29,10 @@ class MarinePush : public sc2::Agent {
     bool TryBuildStructureConcurrent(
         sc2::ABILITY_ID ability_type_for_structure,
         sc2::UNIT_TYPEID unit_type = sc2::UNIT_TYPEID::TERRAN_SCV);
-
-
+    bool TryBuildStructureAt(
+        sc2::ABILITY_ID ability_type_for_structure,
+        sc2::Point2D where_to_build,
+        sc2::UNIT_TYPEID unit_type = sc2::UNIT_TYPEID::TERRAN_SCV);
 
     void CollectVespene();
     std::vector<sc2::Unit> FindUnderMiningRefinery();
@@ -59,6 +61,7 @@ class MarinePush : public sc2::Agent {
     bool TryBuildFactory();
     bool TryBuildExpansionCommandCenter();
     void TryBuildBarrackTechLab();
+    void MyTest();
 
     /** Helper Functions **/
     bool checkAttackCondition(ArmyType type);
@@ -88,5 +91,5 @@ class MarinePush : public sc2::Agent {
     std::vector<sc2::Point3D> expansions_;
     bool if_vehicle_rush = false;
     bool if_soldier_rush = false;
-
+    std::vector<Slot> barrack_locations; 
 };
